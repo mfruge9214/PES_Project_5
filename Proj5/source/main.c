@@ -44,6 +44,9 @@
 #include "circular_buffer.h"
 #include "logger.h"
 
+/* UCUNIT test files */
+#include "uCUnit_test/Testsuite.c"
+
 /* TODO: insert other definitions and declarations here. */
 
 
@@ -69,6 +72,8 @@ int main(void) {
     int i = 0;
     char bufferOut;
 
+
+    UCUNIT_RUN();
     CircularBuffer_t * circBuf = CircBufCreate();
     CircBufferReturn_t	bufReturn;
     char string[20] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't'};
