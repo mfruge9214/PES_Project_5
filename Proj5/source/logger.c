@@ -38,7 +38,9 @@ static const char * FunctionNameStrings[NUM_FUNCTIONS] = {
 		"TMP102POST: 		",
 		"TMP102TempRead: 	",
 		"CircBufInit		",
-		"CircBufRealloc		"
+		"CircBufRealloc		",
+		"CircBufAdd			",
+		"CircBufRemove		"
 };
 
 void logInit(LoggerLevel lvl)

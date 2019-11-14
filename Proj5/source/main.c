@@ -39,9 +39,16 @@
 #include "clock_config.h"
 #include "MKL25Z4.h"
 #include "fsl_debug_console.h"
+
 /* TODO: insert other include files here. */
+#include "circular_buffer.h"
+#include "logger.h"
 
 /* TODO: insert other definitions and declarations here. */
+
+
+#define loglevel	LOGGER_LEVEL_DEBUG
+
 
 /*
  * @brief   Application entry point.
@@ -55,6 +62,38 @@ int main(void) {
   	/* Init FSL debug console. */
     BOARD_InitDebugConsole();
 
+    /* Initialize development modules */
+    logInit(loglevel);
+    logEnable();
+
+    int i = 0;
+    char bufferOut;
+
+    CircularBuffer_t * circBuf = CircBufCreate();
+    CircBufferReturn_t	bufReturn;
+    char string[20] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't'};
+
+    bufReturn = CircBufInit(circBuf, BUFSIZE);
+
+    bufReturn = CircBufAdd(circBuf, '1');
+
+    bufReturn = CircBufAdd(circBuf, '2');
+
+    bufReturn = CircBufRemove(circBuf, &bufferOut);
+
+    while(bufReturn == BUF_SUCCESS)
+    {
+    	bufReturn = CircBufAdd(circBuf, string[i]);
+    	i++;
+    }
+
+    bufReturn = BUF_SUCCESS;
+
+    while(bufReturn == BUF_SUCCESS)
+    {
+    	bufReturn = CircBufRemove(circBuf, &bufferOut);
+    }
+    bufReturn = CircBufDestroy(circBuf);
 
     return 0 ;
 }

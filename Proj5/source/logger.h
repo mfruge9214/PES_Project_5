@@ -15,7 +15,7 @@
 
 #define BUF_SIZE		50
 #define NUM_LEVELS      3
-#define NUM_FUNCTIONS 	17
+#define NUM_FUNCTIONS 	21
 
 /*** Logger Level Header Info ***/
 typedef enum
@@ -50,7 +50,9 @@ typedef enum
 	FN_TMP102POST			,
 	FN_TMP102TempRead		,
 	FN_CircBufInit			,
-	FN_CircBufRealloc
+	FN_CircBufRealloc		,
+	FN_CircBufAdd			,
+	FN_CircBufRemove
 } FunctionName;
 
 /***********************************************
