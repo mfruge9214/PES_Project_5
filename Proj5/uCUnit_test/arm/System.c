@@ -5,8 +5,9 @@
  *  (C) 2007 - 2008 Sven Stefan Krauss                                       *
  *                  https://www.ucunit.org                                   *
  *                                                                           *
- *  File        : Testsuite.h                                                *
- *  Description : Public testsuite functions                                 *
+ *  File        : System.c                                                   *
+ *  Description : System dependent functions used by uCUnit.                 *
+ *                This file runs with arm-elf-run                            *
  *  Author      : Sven Stefan Krauss                                         *
  *  Contact     : www.ucunit.org                                             *
  *                                                                           *
@@ -33,11 +34,59 @@
  * If you cannot obtain a copy of the License, please contact the
  * author.
  */
-#ifndef TESTSUITE_H_
-#define TESTSUITE_H_
+#include <stdio.h>
+#include <stdlib.h>
+#include "../System.h"
 
-#define BUFFER_TEST_SIZE	4
+/* Stub: Initialize your hardware here */
+void System_Init(void)
+{
 
-void Testsuite_RunTests(void);
+	printf("Init of hardware finished.\n");
+}
 
-#endif /* TESTSUITE_H_ */
+/* Stub: Shutdown your hardware here */
+void System_Shutdown(void)
+{
+
+	/* asm("\tSTOP"); */
+	printf("System shutdown.\n");
+	exit(0);
+}
+
+/* Stub: Recover the system */
+void System_Recover(void)
+{
+	/* Stub: Recover the hardware */
+	/* asm("\tRESET"); */
+	printf("System reset.\n");
+	exit(0);
+}
+
+/* Stub: Put system in a safe state */
+void System_Safestate(void)
+{
+	/* Disable all port pins */
+	/* PORTA = 0x0000; */
+	/* PORTB = 0x0000; */
+	/* PORTC = 0x0000; */
+
+	/* Disable interrupts */
+	/* DIE(); */
+
+	/* Put processor into idle state */
+	/* asm("\tIDLE"); */
+	printf("System safe state.\n");
+	exit(0);
+}
+
+/* Stub: Transmit a string to the host/debugger/simulator */
+void System_WriteString(char * msg)
+{
+	printf(msg);
+}
+
+void System_WriteInt(int n)
+{
+	printf("%i", n);
+}
