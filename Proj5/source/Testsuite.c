@@ -227,6 +227,8 @@ void Test_BasicBuffer(void)
 		UCUNIT_CheckIsEqual(bufStatus, BUF_SUCCESS);
 		UCUNIT_CheckIsEqual(string[i], bufOut);
 	}
+
+	CircBufDestroy(buffer);
 	UCUNIT_TestcaseEnd();
 }
 
@@ -251,6 +253,8 @@ void Test_CircularBufferFull()
 
 	bufStatus = CircBufAdd(buffer, string[0]);
 	UCUNIT_CheckIsEqual(bufStatus, BUF_FULL);
+
+	CircBufDestroy(buffer);
 	UCUNIT_TestcaseEnd();
 }
 
@@ -269,6 +273,7 @@ void Test_CircularBufferEmpty(void)
 	bufStatus = CircBufRemove(buffer, &bufOut);
 	UCUNIT_CheckIsEqual(bufStatus, BUF_EMPTY);
 
+	CircBufDestroy(buffer);
 	UCUNIT_TestcaseEnd();
 }
 
@@ -302,6 +307,7 @@ void Test_CircularBufferWrapAdd(void)
 	/* Check that the last element added is at the beginning of the buffer */
 	UCUNIT_CheckIsEqual(*(buffer->buffer_start), string[i]);
 
+	CircBufDestroy(buffer);
 	UCUNIT_TestcaseEnd();
 }
 
@@ -346,6 +352,7 @@ void Test_CircularBufferWrapRemove(void)
 	/* If Wrap Add test works, then if head and tail are equal then tail must have wrapped */
 	UCUNIT_CheckIsEqual(buffer->head, buffer->tail);
 
+	CircBufDestroy(buffer);
 	UCUNIT_TestcaseEnd();
 
 }
