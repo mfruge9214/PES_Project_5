@@ -233,6 +233,7 @@ void Test_BasicBuffer(void)
 void Test_CircularBufferFull()
 {
 	char string[BUFFER_TEST_SIZE] = {'a', 'b', 'c', 'd'};
+	int i;
 	CircBufferReturn_t bufStatus;
 	CircularBuffer_t * buffer = CircBufCreate();
 	UCUNIT_TestcaseBegin("Buffer Full Test");
@@ -273,8 +274,9 @@ void Test_CircularBufferEmpty(void)
 
 void Test_CircularBufferWrapAdd(void)
 {
-	char string[BUFFER_TEST_SIZE] = {'a', 'b', 'c', 'd', 'e'};
+	char string[BUFFER_TEST_SIZE + 1] = {'a', 'b', 'c', 'd', 'e'};
 	char bufOut;
+	int i;
 	CircBufferReturn_t bufStatus;
 	CircularBuffer_t * buffer = CircBufCreate();
 	UCUNIT_TestcaseBegin("Buffer Wrap Add Test");
@@ -305,8 +307,9 @@ void Test_CircularBufferWrapAdd(void)
 
 void Test_CircularBufferWrapRemove(void)
 {
-	char string[BUFFER_TEST_SIZE] = {'a', 'b', 'c', 'd', 'e'};
+	char string[BUFFER_TEST_SIZE + 1] = {'a', 'b', 'c', 'd', 'e'};
 	char bufOut;
+	int i;
 	CircBufferReturn_t bufStatus;
 	CircularBuffer_t * buffer = CircBufCreate();
 	UCUNIT_TestcaseBegin("Buffer Wrap Remove Test");
@@ -330,7 +333,7 @@ void Test_CircularBufferWrapRemove(void)
 	/* Add another element to buffer - should wrap around to beginning */
 	bufStatus = CircBufAdd(buffer, string[i]);
 
-	bufStatus = BUF_SUCCESS
+	bufStatus = BUF_SUCCESS;
 	i = 0;
 	/* Remove elements until buffer is empty */
 	while(bufStatus == BUF_SUCCESS)
@@ -351,7 +354,7 @@ void Testsuite_RunTests(void)
     Test_CircularBufferCreate();
     Test_BasicBuffer();
     Test_CircularBufferFull();
-    Test_CircualrBufferEmpty();
+    Test_CircularBufferEmpty();
     Test_CircularBufferWrapAdd();
     Test_CircularBufferWrapRemove();
 
