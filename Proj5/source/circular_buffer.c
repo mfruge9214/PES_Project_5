@@ -100,16 +100,17 @@ CircBufferReturn_t CircBufRealloc(CircularBuffer_t * buf)
 
 	/* Create holding values */
 	char* old_head, old_bufend, new_bufend;
+	char cTransfer;
+
 	old_head = buf->head;
 	old_tail = buf->tail;
 	old_bufend = (char*) buf->buffer_start + (sizeof(char) * buf->capacity);
-	char cTransfer;
 
 	/* Set new values */
 	buf->head = old_bufend;
 	buf->capacity *= BUFSIZE_MULT;
-
 	new_bufend = (char*) buf->buffer_start + (sizeof(char) * buf->capacity);
+
 	/* Loop to move characters while keeping them in order */
 
 	do{		// The do while loop handles the case of the buffer being full

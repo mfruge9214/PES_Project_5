@@ -41,6 +41,8 @@
 
 
 
+
+
 /* 	T E S T 	C A S E S	*/
 
 void Test_CircularBufferCreate(void)
@@ -227,6 +229,49 @@ void Test_CircularBufferWrapRemove(void)
 	UCUNIT_TestcaseEnd();
 
 }
+
+
+void Test_CircularBufferRealloc(void)
+{
+	int i = 0;
+	char bufOut;
+	char string[BUFFER_TEST_SIZE + 1] = {'a', 'b', 'c', 'd', 'e'};
+	CircBufferReturn_t bufStatus;
+	CircularBuffer_t * buffer = CircBufCreate();
+	UCUNIT_TestcaseBegin("Basic Buffer Test");
+
+	/* Init buffer and ensure success */
+	bufStatus = CircBufInit(buffer, BUFFER_TEST_SIZE);
+	UCUNIT_CheckIsEqual(bufStatus, BUF_SUCCESS);
+
+	/* Obtain values to check */
+	char* old_bufend = old_bufend = (char*) buf->buffer_start + (sizeof(char) * buf->capacity);
+
+	/* Add characters to capacity */
+	for(i=0 ; i<BUFFER_TEST_SIZE ; i++)
+	{
+		bufStatus = CircBufAdd(buffer, string[i]);
+		UCUNIT_CheckIsEqual(bufStatus, BUF_SUCCESS);
+	}
+
+	/* Add one more character to force buffer reallocation */
+	bufStatus = CircBufAdd(buffer, string[i]);
+
+	UCUNIT_CheckIsEqual(buffer->capacity, BUFFER_TEST_SIZE * 2);
+	UCUNIT_CheckIsEqual(buffer->length, BUFFER_TEST_SIZE + 1);
+	UCUNIT_CheckIsEqual(buffer->tail, old_buffend);
+
+	i=0;
+	while(CircBufIsEmpty(buffer) != BUF_EMPTY)
+	{
+		CircBufRemove(buffer, &bufOut);
+		UCUNIT_CheckIsEqual(bufOut, string[i]);
+	}
+
+	CircBufDestroy(buffer);
+	UCUNIT_TestcaseEnd();
+}
+
 void Testsuite_RunTests(void)
 {
     Test_CircularBufferCreate();
@@ -235,6 +280,7 @@ void Testsuite_RunTests(void)
     Test_CircularBufferEmpty();
     Test_CircularBufferWrapAdd();
     Test_CircularBufferWrapRemove();
+    Test_CircularBufferRealloc();
 
     UCUNIT_WriteSummary();
 }
