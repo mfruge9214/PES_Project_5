@@ -1,6 +1,7 @@
 /* Includes */
 
 #include "circular_buffer.h"
+#include "Systick.h"
 #include "logger.h"
 #include <stdlib.h>
 
@@ -93,6 +94,7 @@ CircBufferReturn_t CircBufRealloc(CircularBuffer_t * buf)
 		return BUF_FAIL;
 	}
 
+	START_CRITICAL();
 	/* Adjust values to reflect change */
 	buf->capacity *= BUFSIZE_MULT;
 	buf->numReallocs ++;
@@ -100,7 +102,7 @@ CircBufferReturn_t CircBufRealloc(CircularBuffer_t * buf)
 
 	/*	TODO: Need to re-fill the buffer with what it had before */
 
-
+	END_CRITICAL();
 	return BUF_SUCCESS;
 
 }
@@ -138,6 +140,7 @@ CircBufferReturn_t	CircBufAdd(CircularBuffer_t * buf, char c)
 		else return ret;
 	}
 
+	START_CRITICAL();
 	/* Add element by placing into current tail position and moving tail forward 1 or wrapping */
 	*(buf->head) = c;
 	(buf->head)++;
@@ -152,7 +155,7 @@ CircBufferReturn_t	CircBufAdd(CircularBuffer_t * buf, char c)
 		buf->head = buf->buffer_start;
 	}
 
-
+	END_CRITICAL();
 	return BUF_SUCCESS;
 }
 
@@ -180,7 +183,8 @@ CircBufferReturn_t	CircBufRemove(CircularBuffer_t * buf, char * charOut)
 		return BUF_EMPTY;
 	}
 
-	/* TODO: Make this section a critical section */
+	START_CRITICAL();
+
 	/* Extract the data into the charOut parameter */
 	*charOut = *(buf->tail);
 	(buf->tail)++;
@@ -193,6 +197,8 @@ CircBufferReturn_t	CircBufRemove(CircularBuffer_t * buf, char * charOut)
 	{
 		buf->tail = buf->buffer_start;
 	}
+
+	END_CRITICAL();
 
 	return BUF_SUCCESS;
 }

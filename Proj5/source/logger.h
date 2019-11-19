@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <string.h>
 #include "fsl_debug_console.h"
+#include "core_cm0plus.h"
+
 
 /* Create Logging Structures */
 /* Created in preparation for later assignments */
@@ -16,6 +18,7 @@
 #define BUF_SIZE		50
 #define NUM_LEVELS      3
 #define NUM_FUNCTIONS 	21
+#define TIMESTAMP_LEN	11
 
 /*** Logger Level Header Info ***/
 typedef enum
