@@ -17,6 +17,9 @@
 #define TRANSMIT_CONDITION		(0x0A)
 #define ASCII_CHAR_CNT			57
 
+#define uartNonBlockTransmitEnable		(UART0->C2 |= UART_C2_TIE_MASK)
+#define uartNonBlockTransmitDisable		(UART0->C2 &= ~UART_C2_TIE_MASK)
+
 typedef enum
 {
 	tx_ready,		//uartBlockTransmitReady
@@ -39,8 +42,11 @@ typedef enum
 typedef struct
 {
 	bool	uartST_txReady;
+	bool 	uartST_txEnabled;
 	bool	uartST_rxReady;
-	bool	uartST_rxDisable;
+	bool	uartST_rxEnabled;
+	uint8_t txByte;
+	uint8_t rxByte;
 }uart_nb_state_t;
 
 

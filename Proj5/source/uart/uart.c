@@ -58,8 +58,11 @@ void uartEnableInterrupts(bool enable)
 	if(enable)
 	{
 		uartST.uartST_txReady 	= false;
+		uartST.uartST_txEnabled = false;
 		uartST.uartST_rxReady 	= false;
-		uartST.uartST_rxDisable = false;
+		uartST.uartST_rxEnabled = false;
+		uartST.txByte			= 0;
+		uartST.rxByte			= 0;
 
 		UART0->C2 |= UART_C2_TIE_MASK; 		//interrupt when data can be transmitted
 		UART0->C2 |= UART_C2_RIE_MASK; 		//interrupt when data has been received
@@ -210,6 +213,7 @@ uart_ret_t uartBlockApp(CircularBuffer_t * buf)
 
 /* * * * * NON-BLOCKING UART FUNCTIONS * * * * */
 
+
 /*
  * brief: uartNonBlockEcho - Retransmits any characters that have been received
  * param: N/A
@@ -223,19 +227,12 @@ uart_ret_t uartNonBlockEcho(void)
 	//XXX test for development purposes
 	for(uint8_t i = 0; i < 5; i++)
 	{
-		echo_byte = 'X';
-		if(uartST.uartST_txReady)								//send character
-		{
-			ret = uartSendByte(echo_byte);
-			if(ret != tx_success)
-				return ret;
-
-			//update UART state
-			uartST.uartST_txReady	= false;
-		}
+		uartST.txByte = ('A' + i);
+		uartNonBlockTransmitEnable;
 	}
+	uartNonBlockTransmitDisable;
 
-	if(uartST.uartST_rxReady && !uartST.uartST_rxDisable) 	//read character
+	if(uartST.uartST_rxReady && uartST.uartST_rxEnabled) 	//read character
 	{
 		ret = uartReadByte((uint8_t *)&echo_byte);
 		if(ret != rx_success)
@@ -243,7 +240,7 @@ uart_ret_t uartNonBlockEcho(void)
 
 		//update UART state
 		uartST.uartST_rxReady	= false;
-		uartST.uartST_rxDisable = true;
+		uartST.uartST_rxEnabled	= false;
 	}
 
 	if(uartST.uartST_txReady)								//send character
@@ -254,7 +251,7 @@ uart_ret_t uartNonBlockEcho(void)
 
 		//update UART state
 		uartST.uartST_txReady	= false;
-		uartST.uartST_rxDisable = false;
+		uartST.uartST_rxEnabled	= true;
 	}
 
 	return echo_success;
@@ -297,10 +294,14 @@ uart_ret_t uartNonBlockApp(CircularBuffer_t * buf)
  */
 void UART0_IRQHandler()
 {
-	uint8_t flags = UART0->S1;
-
-	if(flags & UART_S1_RDRF_MASK)
+	if(UART0->S1 & UART_S1_RDRF_MASK)
+	{
 		uartST.uartST_rxReady = true;
-	if(flags & UART_S1_TDRE_MASK)
-		uartST.uartST_txReady = true;
+		uartST.rxByte = UART0->D;
+	}
+	if((UART0->S1 & UART_S1_TDRE_MASK) && (UART0->C2 & UART_C2_TIE_MASK))
+	{
+		UART0->D = uartST.txByte;
+		uartNonBlockTransmitDisable;
+	}
 }
