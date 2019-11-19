@@ -167,7 +167,7 @@ CircBufferReturn_t	CircBufAdd(CircularBuffer_t * buf, char c)
 
 		ret = BUF_FULL;
 
-		if(REALLOCATE_BUFFER)
+		if(REALLOCATE_BUFFER && (buf->numReallocs < 5))
 		{
 			ret = CircBufRealloc(buf);
 		}
