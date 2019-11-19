@@ -66,9 +66,7 @@ void uartEnableInterrupts(bool enable)
 
 		//TODO add interrupts for errors
 
-		UART0->C2 |= UART_C2_RIE_MASK; 		//rx interrupt enable
-		UART0->C2 |= UART_C2_TIE_MASK;		//tx interrupt enable
-		NVIC_EnableIRQ(UART1_IRQn);
+		NVIC_EnableIRQ(UART0_IRQn);
 	}
 }
 
@@ -92,6 +90,13 @@ uart_ret_t uartReadByte(uint8_t * b)
 {
 	*b = UART0->D;
 	return rx_success;
+}
+
+uart_ret_t uartSendReport()
+{
+//	uint8_t char_counts[ASCII_CHAR_CNT] = {0};
+
+	return report_success;
 }
 
 /* * * * * BLOCKING UART FUNCTIONS * * * * */
@@ -154,6 +159,16 @@ uart_ret_t uartBlockEcho()
 	char echo_byte;
 	uart_ret_t ret;
 
+	//XXX test for development purposes
+	for(uint8_t i = 0; i < 5; i++)
+	{
+		echo_byte = 'X';
+		ret = uartBlockSendCharacter(echo_byte);
+		if(ret != tx_success)
+			return echo_fail;
+
+	}
+
 	ret = uartBlockReadCharacter(&echo_byte);
 	if(ret != rx_success)
 		return echo_fail;
@@ -170,8 +185,26 @@ uart_ret_t uartBlockEcho()
  * param: N/A
  * ret: success or fail
  */
-uart_ret_t uartBlockApp()
+uart_ret_t uartBlockApp(CircularBuffer_t * buf)
 {
+	char new_byte;
+	uart_ret_t ret;
+
+	/* Read new character */
+	ret = uartBlockReadCharacter(&new_byte);
+	if(ret != rx_success)
+		return ret;
+
+	/* TODO Add character to buffer */
+
+	/* Check character value */
+	if(new_byte == TRANSMIT_CONDITION)
+	{
+		ret = uartSendReport();
+		if(ret != report_success)
+			return ret;
+	}
+
 	return app_success;
 }
 
@@ -184,6 +217,46 @@ uart_ret_t uartBlockApp()
  */
 uart_ret_t uartNonBlockEcho(void)
 {
+	static char echo_byte;
+	uart_ret_t ret;
+
+	//XXX test for development purposes
+	for(uint8_t i = 0; i < 5; i++)
+	{
+		echo_byte = 'X';
+		if(uartST.uartST_txReady)								//send character
+		{
+			ret = uartSendByte(echo_byte);
+			if(ret != tx_success)
+				return ret;
+
+			//update UART state
+			uartST.uartST_txReady	= false;
+		}
+	}
+
+	if(uartST.uartST_rxReady && !uartST.uartST_rxDisable) 	//read character
+	{
+		ret = uartReadByte((uint8_t *)&echo_byte);
+		if(ret != rx_success)
+			return ret;
+
+		//update UART state
+		uartST.uartST_rxReady	= false;
+		uartST.uartST_rxDisable = true;
+	}
+
+	if(uartST.uartST_txReady)								//send character
+	{
+		ret = uartSendByte(echo_byte);
+		if(ret != tx_success)
+			return ret;
+
+		//update UART state
+		uartST.uartST_txReady	= false;
+		uartST.uartST_rxDisable = false;
+	}
+
 	return echo_success;
 }
 
@@ -192,8 +265,28 @@ uart_ret_t uartNonBlockEcho(void)
  * param: N/A
  * ret: success or fail
  */
-uart_ret_t uartNonBlockApp(void)
+uart_ret_t uartNonBlockApp(CircularBuffer_t * buf)
 {
+	static char new_byte;
+	uart_ret_t ret;
+
+	if(uartST.uartST_rxReady)								//read character
+	{
+		ret = uartReadByte((uint8_t *)&new_byte);
+		if(ret != rx_success)
+			return ret;
+
+		/* TODO add to buffer */
+
+		if(new_byte == TRANSMIT_CONDITION)
+		{
+			ret = uartSendReport();
+			if(ret != report_success)
+				return ret;
+		}
+
+	}
+
 	return app_success;
 }
 

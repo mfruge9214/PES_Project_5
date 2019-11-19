@@ -8,6 +8,7 @@
 #define _MAIN_H
 
 #include "uart.h"
+#include "circular_buffer.h"
 
 /*~~~~~~~~~~~  UART_MODE ~~~~~~~~~~~*/
 #define NONBLOCKING_MODE		0
@@ -15,7 +16,7 @@
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /* Set to 0 for Interrupt Based UART
  * Set to 1 for Blocking/Polling Based UART  */
-#define UART_MODE 				BLOCKING_MODE
+#define UART_MODE 				NONBLOCKING_MODE
 
 
 /*~~~~~~~~~~ PROGRAM_MODE ~~~~~~~~~~*/
@@ -30,30 +31,26 @@
 
 
 
-typedef uart_ret_t (* uart_fcnPtr)(void);
 
 #if UART_MODE
 #define INT_ENABLE				0
-uart_fcnPtr uartEcho 			= uartBlockEcho;
-uart_fcnPtr uartApp		 		= uartBlockApp;
+uart_ret_t (* uartEcho)(void)					= uartBlockEcho;
+uart_ret_t (* uartApp)(CircularBuffer_t * buf)	= uartBlockApp;
 #else
 #define INT_ENABLE				1
-uart_fcnPtr uartEcho 			= uartNonBlockEcho;
-uart_fcnPtr uartApp		 		= uartNonBlockApp;
+uart_ret_t (* uartEcho)(void)					= uartNonBlockEcho;
+uart_ret_t (* uartApp)(CircularBuffer_t * buf)	= uartNonBlockApp;
 #endif /* UART_MODE */
 
-#if 	(PROGRAM_MODE == 0)
+#if 	(PROGRAM_MODE == ECHO_MODE)
 #define loglevel	LOGGER_LEVEL_DEBUG
-#elif	(PROGRAM_MODE == 1)
-uart_ret_t (* uartRun)(void) 	= uartApp;
+#elif	(PROGRAM_MODE == APP_MODE)
 #define loglevel	LOGGER_LEVEL_DEBUG
-#elif	(PROGRAM_MODE == 2)
+#elif	(PROGRAM_MODE == TEST_MODE)
 #define loglevel	LOGGER_LEVEL_TEST
 #else
 #error "Undefined Program Mode"
 #endif	/* PROGRAM_MODE */
-
-
 
 
 #endif /* _MAIN_H */

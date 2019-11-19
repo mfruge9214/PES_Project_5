@@ -43,7 +43,6 @@
 
 /* TODO: insert other include files here. */
 #include "main.h"
-#include "circular_buffer.h"
 #include "logger.h"
 #include "Systick.h"
 
@@ -66,60 +65,54 @@ int main(void) {
 
     /* Initialize development modules */
     SystickInit();
-    NVIC_EnableIRQ(SysTick_IRQn);
     logInit(loglevel);
     logEnable();
+    uartInit(INT_ENABLE);
 
-//    int i = 0;
-//    char bufferOut;
+#if (PROGRAM_MODE == ECHO_MODE)
 
-    /* Run tests and exit */
-	if(PROGRAM_MODE == TEST_MODE)
-	{
-		Testsuite_RunTests();
-		return 1;
-	}
-
+	/* Run echo mode indefinitely - unless error detected */
+    uart_ret_t err;
 	while(1)
 	{
-		if(PROGRAM_MODE == ECHO_MODE)
+		err = uartEcho();
+		if(err != echo_success)
 		{
-			uartEcho();
-		}
-		else if(PROGRAM_MODE == APP_MODE)
-		{
-			uartApp();
+			//log error
+			return -1;
 		}
 	}
 
-//	else
-//	{
-//		/* Program goes in here */
-//		CircularBuffer_t * circBuf = CircBufCreate();
-//		CircBufferReturn_t	bufReturn;
-//		char string[20] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't'};
-//
-//		bufReturn = CircBufInit(circBuf, BUFSIZE);
-//
-//		bufReturn = CircBufAdd(circBuf, '1');
-//
-//		bufReturn = CircBufAdd(circBuf, '2');
-//
-//		bufReturn = CircBufRemove(circBuf, &bufferOut);
-//
-//		while(bufReturn == BUF_SUCCESS)
-//		{
-//			bufReturn = CircBufAdd(circBuf, string[i]);
-//			i++;
-//		}
-//
-//		bufReturn = BUF_SUCCESS;
-//
-//		while(bufReturn == BUF_SUCCESS)
-//		{
-//			bufReturn = CircBufRemove(circBuf, &bufferOut);
-//		}
-//		bufReturn = CircBufDestroy(circBuf);
+#elif (PROGRAM_MODE == APP_MODE)
+
+	/* Initialize a circular buffer to store received characters */
+	CircularBuffer_t * circ_buf = CircBufCreate();
+	CircBufferReturn_t ret = CircBufInit(circ_buf, BUFSIZE);
+	if(ret != BUF_SUCCESS)
+	{
+		//log error
+		return -1;
+	}
+
+	/* Run app mode indefinitely - unless error detected */
+    uart_ret_t err;
+	while(1)
+	{
+		err = uartApp(circ_buf);
+		if(err != app_success)
+		{
+			//log error
+			return -1;
+		}
+	}
+
+#elif	(PROGRAM_MODE == TEST_MODE)
+
+	/* Run tests and exit */
+	Testsuite_RunTests();
+	return 0;
+
+#endif	/* PROGRAM_MODE */
 
     return 0 ;
 }
