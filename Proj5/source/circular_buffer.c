@@ -1,6 +1,7 @@
 /* Includes */
 
 #include "circular_buffer.h"
+#include "Systick.h"
 #include "logger.h"
 #include <stdlib.h>
 
@@ -11,11 +12,32 @@
 
 /* Functions */
 
-CircularBuffer_t* CircBufCreate()
+
+/**************************
+ * 	CircBufCreate();
+ *
+ * 	@brief	Allocate a pointer to CircBuf to be referenced throughout
+ *
+ * 	@returns	Pointer to buffer structure
+ *
+ **************************/
+CircularBuffer_t* CircBufCreate(void)
 {
 	return (CircularBuffer_t*) malloc(sizeof(CircularBuffer_t));
 }
 
+
+/************************
+ * 	CircBufInit
+ *
+ * 	@brief	Initialize a circular buffer structure
+ *
+ * 	@param[in] CircularBuffer_t * buf		Pointer to CircularBuffer
+ *
+ * 	@param[in] uint8_t size		Size of buffer
+ *
+ * 	@returns	CircBufferReturn_t 	Status of operation
+ *************************/
 CircBufferReturn_t CircBufInit(CircularBuffer_t * buf, uint8_t size)
 {
 	/* Allocate requested memory */
@@ -32,11 +54,24 @@ CircBufferReturn_t CircBufInit(CircularBuffer_t * buf, uint8_t size)
 	buf->tail = buf->buffer_start;
 	buf->capacity = size;
 	buf->length = 0;
+	buf->numReallocs = 0;
 
 	return BUF_SUCCESS;
 }
 
 
+
+/************************
+ * 	CircBufRealloc
+ *
+ * 	@brief	Reallocate a circular buffer to BUFFSIZE_MULT x capacity
+ *
+ * 	@param[in] CircularBuffer_t * buf		Pointer to CircularBuffer
+ *
+ * 	@ note	Only called when REALLOCATE_BUFFER is defined as 1
+ *
+ * 	@returns	CircBufferReturn_t 	Status of operation
+ *************************/
 CircBufferReturn_t CircBufRealloc(CircularBuffer_t * buf)
 {
 	/* Check the buffer is actually full */
@@ -59,18 +94,68 @@ CircBufferReturn_t CircBufRealloc(CircularBuffer_t * buf)
 		return BUF_FAIL;
 	}
 
+	START_CRITICAL();
+
 	/* Adjust values to reflect change */
+
+	/* Create holding values */
+	char* old_head, old_tail, old_bufend, new_bufend;
+	char cTransfer;
+
+	old_head = buf->head;
+	old_tail = buf->tail;
+	old_bufend = (char*) buf->buffer_start + (sizeof(char) * buf->capacity);
+
+	/* Set new values */
+	buf->head = old_bufend;
 	buf->capacity *= BUFSIZE_MULT;
+	new_bufend = (char*) buf->buffer_start + (sizeof(char) * buf->capacity);
 
+	/* Loop to move characters while keeping them in order */
 
-	/*	TODO: Need to re-fill the buffer with what it had before */
+	do{		// The do while loop handles the case of the buffer being full
 
+		/* Remove the character from the buffer */
+		CircBufRemove(buf, &cTransfer);
+
+		/* Since we already changed the capacity of the buffer, need to check to see when tail wraps */
+		if(buf->tail == old_bufend)
+		{
+			buf->tail = buf->buffer_start;
+		}
+
+		CircBufAdd(buf, cTransfer);
+
+	} while(buf->tail != old_head);
+
+	/* Move tail to proper place */
+	buf->tail = old_bufend;
+	if(buf->head == new_bufend)
+	{
+		buf->head = buf->buffer_start;
+	}
+	buf->numReallocs ++;
+
+	/* Done manipulating interruptible data, so end critical section */
+	END_CRITICAL();
 
 	return BUF_SUCCESS;
-
 }
 
-
+/************************
+ * 	CircBufAdd
+ *
+ * 	@brief	Add an element to the circular buffer
+ *
+ * 	@param[in] CircularBuffer_t * buf		Pointer to CircularBuffer
+ *
+ * 	@param[in] char c		Element to be added
+ *
+ *
+ * 	@returns	CircBufferReturn_t 	Status of operation
+ * 					BUF_SUCCESS		Operation Successful
+ * 					BUF_FULL		Buffer is full
+ *************************/
 CircBufferReturn_t	CircBufAdd(CircularBuffer_t * buf, char c)
 {
 	CircBufferReturn_t ret;
@@ -90,7 +175,8 @@ CircBufferReturn_t	CircBufAdd(CircularBuffer_t * buf, char c)
 		else return ret;
 	}
 
-	/* Add element by placing into current tail position and moving tail forward 1 or wrapping */
+	START_CRITICAL();
+	/* Add element by placing into current head position and moving head forward 1 or wrapping */
 	*(buf->head) = c;
 	(buf->head)++;
 	(buf->length)++;
@@ -104,11 +190,26 @@ CircBufferReturn_t	CircBufAdd(CircularBuffer_t * buf, char c)
 		buf->head = buf->buffer_start;
 	}
 
-
+	END_CRITICAL();
 	return BUF_SUCCESS;
 }
 
 
+
+/************************
+ * 	CircBufRemove
+ *
+ * 	@brief	Remove an element from the circular buffer
+ *
+ * 	@param[in] CircularBuffer_t * buf		Pointer to CircularBuffer
+ *
+ * 	@param[out] char * charOut				Element that was removed
+ *
+ *
+ * 	@returns	CircBufferReturn_t 	Status of operation
+ * 					BUF_SUCCESS		Operation Successful
+ * 					BUF_EMPTY		Buffer is empty
+ *************************/
 CircBufferReturn_t	CircBufRemove(CircularBuffer_t * buf, char * charOut)
 {
 	if(CircBufIsEmpty(buf) == BUF_EMPTY)
@@ -117,7 +218,8 @@ CircBufferReturn_t	CircBufRemove(CircularBuffer_t * buf, char * charOut)
 		return BUF_EMPTY;
 	}
 
-	/* TODO: Make this section a critical section */
+	START_CRITICAL();
+
 	/* Extract the data into the charOut parameter */
 	*charOut = *(buf->tail);
 	(buf->tail)++;
@@ -131,10 +233,25 @@ CircBufferReturn_t	CircBufRemove(CircularBuffer_t * buf, char * charOut)
 		buf->tail = buf->buffer_start;
 	}
 
+	END_CRITICAL();
+
 	return BUF_SUCCESS;
 }
 
 
+/************************
+ * 	CircBufIsFull
+ *
+ * 	@brief	Check if the buffer is full
+ *
+ * 	@param[in] CircularBuffer_t * buf		Pointer to CircularBuffer
+ *
+ *
+ *
+ * 	@returns	CircBufferReturn_t 	Status of operation
+ * 					BUF_SUCCESS		Buffer is not full
+ * 					BUF_FULL		Buffer is full
+ *************************/
 CircBufferReturn_t	CircBufIsFull(CircularBuffer_t * buf)
 {
 	if((buf->capacity == buf->length) && (buf->head == buf->tail))
@@ -146,6 +263,18 @@ CircBufferReturn_t	CircBufIsFull(CircularBuffer_t * buf)
 }
 
 
+
+/************************
+ * 	CircBufIsEmpty
+ *
+ * 	@brief	Check if the buffer is empty
+ *
+ * 	@param[in] CircularBuffer_t * buf		Pointer to CircularBuffer
+ *
+ * 	@returns	CircBufferReturn_t 	Status of operation
+ * 					BUF_SUCCESS		Buffer is not empty
+ * 					BUF_FULL		Buffer is empty
+ *************************/
 CircBufferReturn_t	CircBufIsEmpty(CircularBuffer_t * buf)
 {
 	if((buf->length == 0) && (buf->head == buf->tail))
@@ -155,13 +284,37 @@ CircBufferReturn_t	CircBufIsEmpty(CircularBuffer_t * buf)
 	else return BUF_SUCCESS;
 }
 
-
+/************************
+ * 	CircBufIsValid
+ *
+ * 	@brief	Check if the buffer is set to a valid address
+ *
+ * 	@param[in] CircularBuffer_t * buf		Pointer to CircularBuffer
+ *
+ * 	@returns	CircBufferReturn_t 	Status of operation
+ * 					BUF_SUCCESS		Buffer is valid
+ * 					BUF_FAIL		Buffer is not valid
+ *************************/
 CircBufferReturn_t	CircBufIsValid(CircularBuffer_t * buf)
 {
 	if(buf->buffer_start) return BUF_SUCCESS;
 	else return BUF_FAIL;
 }
 
+
+/************************
+ * 	CircBufIsInitialized
+ *
+ * 	@brief	Check if the buffer is initialized
+ *
+ * 	@param[in] CircularBuffer_t * buf		Pointer to CircularBuffer
+ *
+ * 	@note		Checks buffer_start, head, and tail pointers to ensure they are not null
+ *
+ * 	@returns	CircBufferReturn_t 	Status of operation
+ * 					BUF_SUCCESS		Buffer is initialized
+ * 					BUF_FAIL		Buffer is not initialized
+ *************************/
 CircBufferReturn_t	CircBufIsInitialized(CircularBuffer_t * buf)
 {
 	/* Ensure the buffer pointers are all valid */
@@ -173,6 +326,17 @@ CircBufferReturn_t	CircBufIsInitialized(CircularBuffer_t * buf)
 	else return BUF_FAIL;
 }
 
+
+/************************
+ * 	CircBufDestroy
+ *
+ * 	@brief	Free all memory allocated to the buffer
+ *
+ * 	@param[in] CircularBuffer_t * buf		Pointer to CircularBuffer
+ *
+ * 	@returns	CircBufferReturn_t 	Status of operation
+ * 					BUF_SUCCESS		Memory Freed
+ *************************/
 CircBufferReturn_t CircBufDestroy(CircularBuffer_t * buf)
 {
 	free(buf->buffer_start);

@@ -720,7 +720,7 @@ typedef struct
   \defgroup CMSIS_Core_FunctionInterface Functions and Instructions Reference
 */
 
-
+#include "MKL25Z4.h"
 
 /* ##########################   NVIC functions  #################################### */
 /**

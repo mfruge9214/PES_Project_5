@@ -9,11 +9,12 @@
 
 /* Definitions */
 
-
+#ifndef REALLOCATE_BUFFER
 #define REALLOCATE_BUFFER	0
+#endif
 
 #define BUFSIZE				16
-#define BUFSIZE_MULT		4
+#define BUFSIZE_MULT		2
 
 /* Structures */
 
@@ -24,6 +25,7 @@ typedef struct CircularBuffer_t
 	char* tail;				// Pointer modified with REMOVE operations
 	uint8_t length;			// The current length of the buffer
 	uint32_t capacity;		// The character capacity of the buffer
+	uint8_t numReallocs;	// If realloc is enabled, how many times has it been reallocated
 } CircularBuffer_t;
 
 

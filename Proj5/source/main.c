@@ -39,16 +39,17 @@
 #include "clock_config.h"
 #include "MKL25Z4.h"
 #include "fsl_debug_console.h"
+#include "core_cm0plus.h"
 
 /* TODO: insert other include files here. */
-#include "circular_buffer.h"
+#include "main.h"
 #include "logger.h"
+#include "Systick.h"
 
-/* TODO: insert other definitions and declarations here. */
+/* UCUNIT test files */
+#include "Testsuite.h"
 
-
-#define loglevel	LOGGER_LEVEL_DEBUG
-
+uint32_t int_flag;
 
 /*
  * @brief   Application entry point.
@@ -63,37 +64,55 @@ int main(void) {
     BOARD_InitDebugConsole();
 
     /* Initialize development modules */
+    SystickInit();
     logInit(loglevel);
     logEnable();
+    uartInit(INT_ENABLE);
 
-    int i = 0;
-    char bufferOut;
+#if (PROGRAM_MODE == ECHO_MODE)
 
-    CircularBuffer_t * circBuf = CircBufCreate();
-    CircBufferReturn_t	bufReturn;
-    char string[20] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't'};
+	/* Run echo mode indefinitely - unless error detected */
+    uart_ret_t err;
+	while(1)
+	{
+		err = uartEcho();
+		if(err != echo_success)
+		{
+			//log error
+			return -1;
+		}
+	}
 
-    bufReturn = CircBufInit(circBuf, BUFSIZE);
+#elif (PROGRAM_MODE == APP_MODE)
 
-    bufReturn = CircBufAdd(circBuf, '1');
+	/* Initialize a circular buffer to store received characters */
+	CircularBuffer_t * circ_buf = CircBufCreate();
+	CircBufferReturn_t ret = CircBufInit(circ_buf, BUFSIZE);
+	if(ret != BUF_SUCCESS)
+	{
+		//log error
+		return -1;
+	}
 
-    bufReturn = CircBufAdd(circBuf, '2');
+	/* Run app mode indefinitely - unless error detected */
+    uart_ret_t err;
+	while(1)
+	{
+		err = uartApp(circ_buf);
+		if(err != app_success)
+		{
+			//log error
+			return -1;
+		}
+	}
 
-    bufReturn = CircBufRemove(circBuf, &bufferOut);
+#elif	(PROGRAM_MODE == TEST_MODE)
 
-    while(bufReturn == BUF_SUCCESS)
-    {
-    	bufReturn = CircBufAdd(circBuf, string[i]);
-    	i++;
-    }
+	/* Run tests and exit */
+	Testsuite_RunTests();
+	return 0;
 
-    bufReturn = BUF_SUCCESS;
-
-    while(bufReturn == BUF_SUCCESS)
-    {
-    	bufReturn = CircBufRemove(circBuf, &bufferOut);
-    }
-    bufReturn = CircBufDestroy(circBuf);
+#endif	/* PROGRAM_MODE */
 
     return 0 ;
 }
