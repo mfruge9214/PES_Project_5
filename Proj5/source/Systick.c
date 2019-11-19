@@ -45,6 +45,8 @@ void SysTick_Increment(void)
 	if(SystickFlag)
 	{
 		START_CRITICAL();
+		SystickFlag = 0;
+
 		tenths++;
 		if(tenths == 10)
 		{

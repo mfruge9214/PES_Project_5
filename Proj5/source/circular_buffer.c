@@ -95,16 +95,50 @@ CircBufferReturn_t CircBufRealloc(CircularBuffer_t * buf)
 	}
 
 	START_CRITICAL();
+
 	/* Adjust values to reflect change */
+
+	/* Create holding values */
+	char* old_head, old_bufend, new_bufend;
+	old_head = buf->head;
+	old_tail = buf->tail;
+	old_bufend = (char*) buf->buffer_start + (sizeof(char) * buf->capacity);
+	char cTransfer;
+
+	/* Set new values */
+	buf->head = old_bufend;
 	buf->capacity *= BUFSIZE_MULT;
+
+	new_bufend = (char*) buf->buffer_start + (sizeof(char) * buf->capacity);
+	/* Loop to move characters while keeping them in order */
+
+	do{		// The do while loop handles the case of the buffer being full
+
+		/* Remove the character from the buffer */
+		CircBufRemove(buf, &cTransfer);
+
+		/* Since we already changed the capacity of the buffer, need to check to see when tail wraps */
+		if(buf->tail == old_bufend)
+		{
+			buf->tail = buf->buffer_start;
+		}
+
+		CircBufAdd(buf, cTransfer);
+
+	} while(buf->tail != old_head);
+
+	/* Move tail to proper place */
+	buf->tail = old_bufend;
+	if(buf->head == new_bufend)
+	{
+		buf->head = buf->buffer_start;
+	}
 	buf->numReallocs ++;
 
-
-	/*	TODO: Need to re-fill the buffer with what it had before */
-
+	/* Done manipulating interruptible data, so end critical section */
 	END_CRITICAL();
-	return BUF_SUCCESS;
 
+	return BUF_SUCCESS;
 }
 
 /************************
@@ -141,7 +175,7 @@ CircBufferReturn_t	CircBufAdd(CircularBuffer_t * buf, char c)
 	}
 
 	START_CRITICAL();
-	/* Add element by placing into current tail position and moving tail forward 1 or wrapping */
+	/* Add element by placing into current head position and moving head forward 1 or wrapping */
 	*(buf->head) = c;
 	(buf->head)++;
 	(buf->length)++;

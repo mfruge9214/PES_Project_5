@@ -13,7 +13,7 @@
 #define REALLOCATE_BUFFER	0
 
 #define BUFSIZE				16
-#define BUFSIZE_MULT		4
+#define BUFSIZE_MULT		2
 
 /* Structures */
 
