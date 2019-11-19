@@ -42,6 +42,7 @@
 #include "core_cm0plus.h"
 
 /* TODO: insert other include files here. */
+#include "main.h"
 #include "circular_buffer.h"
 #include "logger.h"
 #include "Systick.h"
@@ -49,12 +50,7 @@
 /* UCUNIT test files */
 #include "Testsuite.h"
 
-/* TODO: insert other definitions and declarations here. */
-
 uint32_t int_flag;
-
-#define loglevel	LOGGER_LEVEL_TEST
-
 
 /*
  * @brief   Application entry point.
@@ -74,18 +70,26 @@ int main(void) {
     logInit(loglevel);
     logEnable();
 
-    int i = 0;
-    char bufferOut;
+//    int i = 0;
+//    char bufferOut;
 
     /* Run tests and exit */
-	if(loglevel == LOGGER_LEVEL_TEST)
+	if(PROGRAM_MODE == TEST_MODE)
 	{
 		Testsuite_RunTests();
+		return 1;
 	}
 
 	while(1)
 	{
-
+		if(PROGRAM_MODE == ECHO_MODE)
+		{
+			uartEcho();
+		}
+		else if(PROGRAM_MODE == APP_MODE)
+		{
+			uartApp();
+		}
 	}
 
 //	else
