@@ -99,7 +99,7 @@ CircBufferReturn_t CircBufRealloc(CircularBuffer_t * buf)
 	/* Adjust values to reflect change */
 
 	/* Create holding values */
-	char* old_head, old_bufend, new_bufend;
+	char* old_head, old_tail, old_bufend, new_bufend;
 	char cTransfer;
 
 	old_head = buf->head;
