@@ -46,8 +46,7 @@ void uartInit(bool int_en)
 	UART0->C2 &= ~UART_C2_TE_MASK; //disable transmit
 
 	/* set data frame */
-//	UART0->C1 |= UART_C1_PT_MASK; 		//odd parity
-//	UART0->C1 |= UART_C1_PE_MASK; 		//enable parity
+
 	UART0->C1 &= ~UART_C1_M_MASK; 		//8 bit data
 	UART0->BDH &= ~UART_BDH_SBNS_MASK;	//1 stop bit
 
