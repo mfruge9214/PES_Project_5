@@ -65,9 +65,9 @@ int main(void) {
 
     /* Initialize development modules */
     SystickInit();
+    uartInit(INT_ENABLE);
     logInit(loglevel);
     logEnable();
-    uartInit(INT_ENABLE);
 
 #if   (PROGRAM_MODE == TEST_MODE)
 	Testsuite_RunTests();				//run testsuite and exit
