@@ -71,6 +71,7 @@ uart_ret_t uartBlockApp(CircularBuffer_t * buf);
 uart_ret_t uartNonBlockEcho(void);
 uart_ret_t uartNonBlockApp(CircularBuffer_t * buf);
 uart_ret_t uartSendReport();
+uart_ret_t uartPrintf(char * string);
 void UART0_IRQHandler();
 
 #endif /* _UART_H */

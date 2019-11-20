@@ -37,10 +37,32 @@ void SystickInit(void)
 void SysTick_Handler(void)
 {
 	START_CRITICAL();
-	SystickFlag = 1;
+
+	tenths++;
+	if(tenths == 10)
+	{
+		seconds++;
+		tenths = 0;
+	}
+
+	if(seconds == 60)
+	{
+		minutes++;
+		seconds = 0;
+	}
+
+	if(minutes == 60)
+	{
+		hours++;
+		minutes = 0;
+	}
+
+
 	END_CRITICAL();
 }
 
+
+/* Created function to check for flag, but due to program limitations had to put operation inside handler
 void SysTick_Increment(void)
 {
 	if(SystickFlag)
@@ -69,6 +91,7 @@ void SysTick_Increment(void)
 		END_CRITICAL();
 	}
 }
+*/
 
 void GetSysTickTime(char stringOut[TIMESTAMP_LEN])
 {

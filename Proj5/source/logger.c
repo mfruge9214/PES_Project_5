@@ -6,6 +6,7 @@
 
 #include "logger.h"
 #include "Systick.h"
+#include "uart.h"
 
 /* Private Variable */
 static bool LOG_ENABLE;
@@ -52,12 +53,12 @@ void logEnable()
 {
 	if(LOG_ENABLE)
 	{
-		printf("Log already Enabled\n\r");
+		uartPrintf("Log already Enabled\n\r");
 	}
 	else
 	{
 		LOG_ENABLE = true;
-		printf("Log Enabled\n\r");
+		uartPrintf("Log Enabled\n\r");
 	}
 
 }
