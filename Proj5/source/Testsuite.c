@@ -43,8 +43,6 @@
 
 
 #define REALLOCATE_BUFFER	1
-
-
 /* 	T E S T 	C A S E S	*/
 
 void Test_CircularBufferCreate(void)

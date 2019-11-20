@@ -9,6 +9,9 @@
 // global var for interrupt handling
 static volatile uart_nb_state_t uartST;
 
+// Static Array for storing characters read
+static uint8_t CharCountArray[ASCII_CHAR_CNT] = {0};
+
 /*
  * brief: uartInit - Initializes hardware, baud, and data frame for UART0
  * param: N/A
@@ -97,7 +100,19 @@ uart_ret_t uartReadByte(uint8_t * b)
 
 uart_ret_t uartSendReport()
 {
-//	uint8_t char_counts[ASCII_CHAR_CNT] = {0};
+	int i;
+	for(i=0; i<ASCII_CHAR_CNT; i++)
+	{
+		// Skip characters that have not been received
+		if(CharCountArray[i] != 0)
+		{
+			uartSendByte(ASCII_BASE + i);
+			uartSendByte('-');
+			uartSendByte(CharCountArray[i]);
+			uartSendByte(';');
+		}
+
+	}
 
 	return report_success;
 }
@@ -274,6 +289,11 @@ uart_ret_t uartNonBlockApp(CircularBuffer_t * buf)
 			return ret;
 
 		/* TODO add to buffer */
+		if(new_byte >= ASCII_BASE && new_byte <= ASCII_END)
+		{
+			CharCountArray[new_byte - ASCII_BASE]++;
+		}
+
 
 		if(new_byte == TRANSMIT_CONDITION)
 		{
@@ -286,6 +306,7 @@ uart_ret_t uartNonBlockApp(CircularBuffer_t * buf)
 
 	return app_success;
 }
+
 
 /*
  * brief: UART0_IRQHandler - Sets flags that are read by NonBlock functions for processing

@@ -19,6 +19,7 @@ CMSIS_driver \
 board \
 drivers \
 source \
+source/uart \
 startup \
 utilities \
 
