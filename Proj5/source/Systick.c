@@ -31,6 +31,7 @@ void SystickInit(void)
 	SysTick->VAL = 0UL;
 	SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk |	SysTick_CTRL_TICKINT_Msk   |	SysTick_CTRL_ENABLE_Msk;
 
+    NVIC_EnableIRQ(SysTick_IRQn);
 }
 
 void SysTick_Handler(void)
