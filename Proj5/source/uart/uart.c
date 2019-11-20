@@ -22,6 +22,8 @@ void uartInit(bool int_en)
 	/* init clocks */
 	SIM->SCGC4 |= SIM_SCGC4_UART0_MASK;
 	SIM->SCGC5 |= SIM_SCGC5_PORTA_MASK;
+	SIM->SOPT2 |= SIM_SOPT2_UARTSRC_MASK;
+	SIM->SOPT2 |= SIM_SOPT2_PLLFLLSEL_MASK;
 
 	/* disable tx & rx */
 	UART0->C2 &= ~UART_C2_RE_MASK; //disable receive
@@ -42,6 +44,7 @@ void uartInit(bool int_en)
 	UART0->BDH &= ~UART0_BDH_SBR_MASK;
 	UART0->BDH |= UART0_BDH_SBR(sbr>>8);
 	UART0->BDL = UART0_BDL_SBR(sbr);
+	UART0->C4 |= UART0_C4_OSR(UART_OVERSAMPLE_RATE - 1);
 
 	/* select whether or not to enable interrupts */
 	uartEnableInterrupts(int_en);
@@ -53,7 +56,7 @@ void uartInit(bool int_en)
 
 /*
  * brief: uartEnableInterrupts - Enables interrupts for non blocking uart
- * param: enable - true of false
+ * param: enable - true or false
  * ret: N/A
  */
 void uartEnableInterrupts(bool enable)
@@ -106,10 +109,10 @@ uart_ret_t uartSendReport()
 		// Skip characters that have not been received
 		if(CharCountArray[i] != 0)
 		{
-			uartSendByte(ASCII_BASE + i);
-			uartSendByte('-');
-			uartSendByte(CharCountArray[i]);
-			uartSendByte(';');
+			uartBlockSendCharacter(ASCII_BASE + i);
+			uartBlockSendCharacter('-');
+			uartBlockSendCharacter(CharCountArray[i]);
+			uartBlockSendCharacter(';');
 		}
 
 	}
@@ -305,6 +308,16 @@ uart_ret_t uartNonBlockApp(CircularBuffer_t * buf)
 	}
 
 	return app_success;
+}
+
+uart_ret_t uartPrintf(char * string)
+{
+	int i;
+
+	while(string[i] != '/0')
+	{
+		uartBlockSendCharacter(string[i]);
+	}
 }
 
 

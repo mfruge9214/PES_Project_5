@@ -16,7 +16,7 @@
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /* Set to 0 for Interrupt Based UART
  * Set to 1 for Blocking/Polling Based UART  */
-#define UART_MODE 				NONBLOCKING_MODE
+#define UART_MODE 				BLOCKING_MODE
 
 
 /*~~~~~~~~~~ PROGRAM_MODE ~~~~~~~~~~*/
