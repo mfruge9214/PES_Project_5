@@ -1,5 +1,7 @@
 # PES_Project_5
 
+Note: Professor gave permission to submit project late due to github issues.
+
 Authors: Mike Fruge and Mark Hinkle
 
 Repo Contents: This repository contains all code and other dosumentation for Project 5 including:
