@@ -62,8 +62,12 @@ uart_ret_t uartBlockApp(void);
 uart_ret_t uartBlockSendReport(void);
 
 uart_ret_t uartNonBlockEcho(void);
+
 uart_ret_t uartNonBlockApp(void);
 uart_ret_t uartNonBlockSendReport(void);
+
+uart_ret_t uartPrintf 	(char * string);
+
 void UART0_IRQHandler();
 
 #endif /* _UART_H */
