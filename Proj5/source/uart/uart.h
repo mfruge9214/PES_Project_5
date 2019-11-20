@@ -15,9 +15,11 @@
 #define UART_BAUD_RATE			(115200)
 
 #define TRANSMIT_CONDITION		(0x0A)
-#define ASCII_CHAR_CNT			57
-#define ASCII_BASE				0x41
+
+#define ASCII_BASE				0x21
 #define ASCII_END				0x7A
+#define ASCII_CHAR_CNT			(ASCII_END - ASCII_BASE)
+
 
 #define uartNonBlockTransmitEnable		(UART0->C2 |= UART_C2_TIE_MASK)
 #define uartNonBlockTransmitDisable		(UART0->C2 &= ~UART_C2_TIE_MASK)

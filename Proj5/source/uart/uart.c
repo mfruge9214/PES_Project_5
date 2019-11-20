@@ -106,7 +106,7 @@ uart_ret_t uartSendReport()
 		// Skip characters that have not been received
 		if(CharCountArray[i] != 0)
 		{
-			uartSendByte(i + ASCII_BASE);
+			uartSendByte(ASCII_BASE + i);
 			uartSendByte('-');
 			uartSendByte(CharCountArray[i]);
 			uartSendByte(';');
