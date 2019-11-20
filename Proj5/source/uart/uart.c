@@ -6,6 +6,7 @@
 #include "uart.h"
 #include "MKL25Z4.h"
 #include "circular_buffer.h"
+#include "gpio.h"
 
 // receive and transmit buffers
 static CircularBuffer_t * rxBuf;
@@ -145,6 +146,7 @@ uart_ret_t uartBlockReceiveReady()
  */
 uart_ret_t uartBlockSendCharacter(char c)
 {
+	gpioGreenLEDOn();
 	while(uartBlockTransmitReady() != tx_ready); //wait
 	return uartSendByte((uint8_t) c);			 //send byte
 }
@@ -156,6 +158,7 @@ uart_ret_t uartBlockSendCharacter(char c)
  */
 uart_ret_t uartBlockReadCharacter(char * c)
 {
+	gpioBlueLEDOn();
 	while(uartBlockReceiveReady() != rx_ready); //wait
 	return uartReadByte((uint8_t *) c);			//read byte
 }
@@ -172,11 +175,18 @@ uart_ret_t uartBlockEcho()
 
 	ret = uartBlockReadCharacter(&echo_byte);
 	if(ret != rx_success)
+	{
+		gpioRedLEDOn();
 		return echo_fail;
+	}
+
 
 	ret = uartBlockSendCharacter(echo_byte);
 	if(ret != tx_success)
+	{
+		gpioRedLEDOn();
 		return echo_fail;
+	}
 
 	return echo_success;
 }
@@ -194,7 +204,10 @@ uart_ret_t uartBlockApp()
 	/* Read new character */
 	ret = uartBlockReadCharacter(&data);
 	if(ret != rx_success)
+	{
+		gpioRedLEDOn();
 		return ret;
+	}
 
 	CircBufAdd(rxBuf, data);
 
@@ -203,7 +216,11 @@ uart_ret_t uartBlockApp()
 	{
 		ret = uartBlockSendReport();
 		if(ret != report_success)
+		{
+			gpioRedLEDOn();
 			return ret;
+		}
+
 	}
 
 	return app_success;
@@ -253,7 +270,11 @@ uart_ret_t uartNonBlockSendCharacter(char c)
 {
 	CircBufferReturn_t ret = CircBufAdd(txBuf, c);
 	if(ret == BUF_FULL)
+	{
+		gpioRedLEDOn();
 		return tx_fail;
+	}
+
 	else
 		return tx_success;
 }
@@ -303,7 +324,11 @@ uart_ret_t uartNonBlockApp()
 	{
 		ret = uartNonBlockSendReport();
 		if(ret != report_success)
+		{
+			gpioRedLEDOn();
 			return ret;
+		}
+
 	}
 	return app_success;
 }
@@ -312,7 +337,7 @@ uart_ret_t uartNonBlockSendReport()
 {
 //	START_CRITICAL();
 
-	uint8_t b;
+	char b;
 	while(CircBufIsEmpty(rxBuf) != BUF_EMPTY)
 	{
 		CircBufRemove(rxBuf, &b);
@@ -354,7 +379,7 @@ uart_ret_t uartNonBlockSendReport()
 
 uart_ret_t uartPrintf(char * string)
 {
-	int i;
+	int i = 0;
 
 	while(string[i] != '/0')
 	{
@@ -386,6 +411,8 @@ void UART0_IRQHandler()
 	if(UART0->S1 & uartNonBlockErrorFlags)
 	{
 		UART0->S1 &= ~uartNonBlockErrorFlags;
+		gpioRedLEDOn();
+
 		//Log error
 	}
 

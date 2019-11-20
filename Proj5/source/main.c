@@ -68,6 +68,9 @@ int main(void) {
     uartInit(INT_ENABLE);
     logInit(loglevel);
     logEnable();
+    gpioInit();
+
+    gpioBlueLEDOn();
 
 #if   (PROGRAM_MODE == TEST_MODE)
 	Testsuite_RunTests();				//run testsuite and exit
