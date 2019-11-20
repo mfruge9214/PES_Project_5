@@ -8,6 +8,7 @@
 #include "circular_buffer.h"
 #include "gpio.h"
 
+
 // receive and transmit buffers
 static CircularBuffer_t * rxBuf;
 static CircularBuffer_t * txBuf;
@@ -146,7 +147,7 @@ uart_ret_t uartBlockReceiveReady()
  */
 uart_ret_t uartBlockSendCharacter(char c)
 {
-	gpioGreenLEDOn();
+//	gpioGreenLEDOn();
 	while(uartBlockTransmitReady() != tx_ready); //wait
 	return uartSendByte((uint8_t) c);			 //send byte
 }
@@ -158,7 +159,7 @@ uart_ret_t uartBlockSendCharacter(char c)
  */
 uart_ret_t uartBlockReadCharacter(char * c)
 {
-	gpioBlueLEDOn();
+//	gpioBlueLEDOn();
 	while(uartBlockReceiveReady() != rx_ready); //wait
 	return uartReadByte((uint8_t *) c);			//read byte
 }
@@ -381,9 +382,10 @@ uart_ret_t uartPrintf(char * string)
 {
 	int i = 0;
 
-	while(string[i] != '/0')
+	while(string[i] != 0)
 	{
 		uartBlockSendCharacter(string[i]);
+		i++;
 	}
 }
 

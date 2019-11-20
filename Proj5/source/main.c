@@ -45,6 +45,7 @@
 #include "main.h"
 #include "logger.h"
 #include "Systick.h"
+#include "gpio.h"
 
 /* UCUNIT test files */
 #include "Testsuite.h"
@@ -67,8 +68,9 @@ int main(void) {
     SystickInit();
     uartInit(INT_ENABLE);
     logInit(loglevel);
-    logEnable();
     gpioInit();
+    logEnable();
+
 
     gpioBlueLEDOn();
 
@@ -93,14 +95,14 @@ int main(void) {
 #if		(PROGRAM_MODE == ECHO_MODE)
 		if(err != echo_success)
 		{
-			logString(LL_Debug, FN_main, "Echo Failed");
+			logString(LL_Debug, FN_main, "Echo Failed\0");
 			return -1;
 		}
 
 #elif	(PROGRAM_MODE == APP_MODE)
 		if(err != app_success)
 		{
-			logString(LL_Debug, FN_main, "Application Failed");
+			logString(LL_Debug, FN_main, "Application Failed\0");
 			return -1;
 		}
 #endif
