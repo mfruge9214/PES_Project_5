@@ -16,6 +16,8 @@
 
 #define TRANSMIT_CONDITION		(0x0A)
 #define ASCII_CHAR_CNT			57
+#define ASCII_BASE				0x41
+#define ASCII_END				0x7A
 
 #define uartNonBlockTransmitEnable		(UART0->C2 |= UART_C2_TIE_MASK)
 #define uartNonBlockTransmitDisable		(UART0->C2 &= ~UART_C2_TIE_MASK)
@@ -66,6 +68,7 @@ uart_ret_t uartBlockApp(CircularBuffer_t * buf);
 
 uart_ret_t uartNonBlockEcho(void);
 uart_ret_t uartNonBlockApp(CircularBuffer_t * buf);
+uart_ret_t uartSendReport();
 void UART0_IRQHandler();
 
 #endif /* _UART_H */
