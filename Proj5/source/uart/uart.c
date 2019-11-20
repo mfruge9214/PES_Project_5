@@ -241,12 +241,6 @@ uart_ret_t uartNonBlockEcho(void)
 {
 	char data;
 
-	for(uint8_t i = 0; i < 10; i++)
-	{
-		data = 'A' + i;
-		CircBufAdd(rxBuf, data);
-	}
-
 	if(CircBufIsEmpty(rxBuf) != BUF_EMPTY)
 	{
 		CircBufRemove(rxBuf, &data);	//transfer data from rxBuf
