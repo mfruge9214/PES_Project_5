@@ -87,7 +87,7 @@ int main(void) {
 	{
 		err = uartRun();
 //		if((err != echo_success) || (err != app_success))
-		if(err != echo_success)
+		if(err != app_success)
 		{
 			//log error
 			return -1;

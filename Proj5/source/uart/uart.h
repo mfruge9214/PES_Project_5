@@ -16,11 +16,11 @@
 #define UART_BUS_CLOCK_FREQ		(24000000)
 #define UART_BAUD_RATE			(115200)
 
-#define TRANSMIT_CONDITION		(0x0A)
+#define TRANSMIT_CONDITION		(0x20)
 
 #define ASCII_BASE				0x21
 #define ASCII_END				0x7A
-#define ASCII_CHAR_CNT			(ASCII_END - ASCII_BASE)
+#define ASCII_CHAR_CNT			((ASCII_END - ASCII_BASE) + 1)
 #define DEC_TO_ASCII(x)			(x + 0x30)
 
 										 //overrun error 	  //noise error        //framing error      //parity error

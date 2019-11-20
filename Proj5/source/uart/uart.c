@@ -211,7 +211,10 @@ uart_ret_t uartBlockSendReport()
 	while(CircBufIsEmpty(rxBuf) != BUF_EMPTY)
 	{
 		CircBufRemove(rxBuf, &b);
-		CharCountArray[b - ASCII_BASE]++;
+		if((b >= ASCII_BASE) && (b <= ASCII_END))
+		{
+			CharCountArray[b - ASCII_BASE]++;
+		}
 	}
 
 	for(uint8_t i = 0; i < ASCII_CHAR_CNT; i++)
@@ -221,16 +224,44 @@ uart_ret_t uartBlockSendReport()
 		{
 			uartBlockSendCharacter(ASCII_BASE + i);
 			uartBlockSendCharacter('-');
-			uartBlockSendCharacter(DEC_TO_ASCII(CharCountArray[i]));
+			if(CharCountArray[i] >= 10)
+			{
+				uartBlockSendCharacter(DEC_TO_ASCII(CharCountArray[i] / 10));
+				uartBlockSendCharacter(DEC_TO_ASCII(CharCountArray[i] % 10));
+			}
+			else
+			{
+				uartBlockSendCharacter(DEC_TO_ASCII(CharCountArray[i]));
+			}
 			uartBlockSendCharacter(';');
-			uartBlockSendCharacter('\n');
+			uartBlockSendCharacter(' ');
 		}
 
 	}
+	uartBlockSendCharacter('\n');
+	uartBlockSendCharacter('\r');
 	return report_success;
 }
 
 /* * * * * NON-BLOCKING UART FUNCTIONS * * * * */
+
+uart_ret_t uartNonBlockSendCharacter(char c)
+{
+	CircBufferReturn_t ret = CircBufAdd(txBuf, c);
+	if(ret == BUF_FULL)
+		return tx_fail;
+	else
+		return tx_success;
+}
+
+uart_ret_t uartNonBlockReadCharacter(char * c)
+{
+	CircBufferReturn_t ret = CircBufRemove(rxBuf, c);
+	if(ret == BUF_EMPTY)
+		return rx_fail;
+	else
+		return rx_success;
+}
 
 /*
  * brief: uartNonBlockEcho - Retransmits any characters that have been received
@@ -275,7 +306,7 @@ uart_ret_t uartNonBlockApp()
 
 uart_ret_t uartNonBlockSendReport()
 {
-	START_CRITICAL();
+//	START_CRITICAL();
 
 	uint8_t b;
 	while(CircBufIsEmpty(rxBuf) != BUF_EMPTY)
@@ -284,22 +315,35 @@ uart_ret_t uartNonBlockSendReport()
 		CharCountArray[b - ASCII_BASE]++;
 	}
 
+	uartNonBlockTransmitEnable;
+
 	for(uint8_t i = 0; i < ASCII_CHAR_CNT; i++)
 	{
 		// Skip characters that have not been received
 		if(CharCountArray[i] != 0)
 		{
 			//TODO change this to CircBufAdd(TxBuf, xxx)
-			uartSendByte(ASCII_BASE + i);
-			uartSendByte('-');
-			uartSendByte(DEC_TO_ASCII(CharCountArray[i]));
-			uartSendByte(';');
-			uartSendByte('\n');
+			uartNonBlockSendCharacter(ASCII_BASE + i);
+			uartNonBlockSendCharacter('-');
+			if(CharCountArray[i] >= 10)
+			{
+				uartNonBlockSendCharacter(DEC_TO_ASCII(CharCountArray[i] / 10));
+				uartNonBlockSendCharacter(DEC_TO_ASCII(CharCountArray[i] % 10));
+			}
+			else
+			{
+				uartNonBlockSendCharacter(DEC_TO_ASCII(CharCountArray[i]));
+			}
+			uartNonBlockSendCharacter(';');
+			uartNonBlockSendCharacter(' ');
 		}
 
 	}
+	uartNonBlockSendCharacter('\n');
+	uartNonBlockSendCharacter('\r');
 
-	END_CRITICAL();
+	uartNonBlockTransmitDisable;
+//	END_CRITICAL();
 	return report_success;
 }
 
