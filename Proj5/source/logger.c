@@ -6,39 +6,40 @@
 
 #include "logger.h"
 #include "Systick.h"
+#include "uart.h"
 
 /* Private Variable */
 static bool LOG_ENABLE;
 static LoggerLevel LOG_LEVEL;
 
 static const char * LoggerLevelStrings[NUM_LEVELS] = {
-		"Test: 	 ",
-		"Debug:  ",
-		"Status: "
+		"	Test: 	 \0",
+		"	Debug:  \0",
+		"	Status: \0"
 };
 
 static const char * FunctionNameStrings[NUM_FUNCTIONS] = {
-		"main: 				",
-		"RedLEDOn: 			",
-		"BlueLEDOn: 		",
-		"GreenLEDOn: 		",
-		"StateMachineA: 	",
-		"StateMachineB: 	",
-		"TempReading: 		",
-		"AverageWait: 		",
-		"TempAlert: 		",
-		"Disconnect: 		",
-		"CalculateAverage: 	",
-		"InitSMParameters: 	",
-		"I2CWriteBytes: 	",
-		"I2CReadBytes: 		",
-		"TMP102Init: 		",
-		"TMP102POST: 		",
-		"TMP102TempRead: 	",
-		"CircBufInit		",
-		"CircBufRealloc		",
-		"CircBufAdd			",
-		"CircBufRemove		"
+		"main: 				\0",
+		"RedLEDOn: 			\0",
+		"BlueLEDOn: 		\0",
+		"GreenLEDOn: 		\0",
+		"StateMachineA: 	\0",
+		"StateMachineB: 	\0",
+		"TempReading: 		\0",
+		"AverageWait: 		\0",
+		"TempAlert: 		\0",
+		"Disconnect: 		\0",
+		"CalculateAverage: 	\0",
+		"InitSMParameters: 	\0",
+		"I2CWriteBytes: 	\0",
+		"I2CReadBytes: 		\0",
+		"TMP102Init: 		\0",
+		"TMP102POST: 		\0",
+		"TMP102TempRead: 	\0",
+		"CircBufInit		\0",
+		"CircBufRealloc		\0",
+		"CircBufAdd			\0",
+		"CircBufRemove		\0"
 };
 
 void logInit(LoggerLevel lvl)
@@ -52,12 +53,12 @@ void logEnable()
 {
 	if(LOG_ENABLE)
 	{
-		printf("Log already Enabled\n\r");
+		uartPrintf("Log already Enabled\n\r\0");
 	}
 	else
 	{
 		LOG_ENABLE = true;
-		printf("Log Enabled\n\r");
+		uartPrintf("Log Enabled\n\r\0");
 	}
 
 }
@@ -65,7 +66,7 @@ void logEnable()
 
 void logDisable()
 {
-	printf("Disabling Logger\n\r");
+	printf("Disabling Logger\n\r\0");
 	if(LOG_ENABLE)
 	{
 		LOG_ENABLE = false;
@@ -92,33 +93,37 @@ void logString(LoggerLevel lvl, FunctionName fn, char* message)
 	case LOGGER_LEVEL_NORMAL:
 		if(lvl == LL_Normal)
 		{
-			printf(timeStamp);
-			printf(LoggerLevelStrings[lvl]);
-			printf(FunctionNameStrings[fn]);
-			printf("%s\n\r", message);
+			uartPrintf(timeStamp);
+			uartPrintf(LoggerLevelStrings[lvl]);
+			uartPrintf(FunctionNameStrings[fn]);
+			uartPrintf(" \0");
+			uartPrintf(message);
+//			uartPrintf("%s\n\r", message);
 		}
 		break;
 
 	case LOGGER_LEVEL_DEBUG:
 		if((lvl == LL_Debug) || (lvl == LL_Normal))
 		{
-			printf(timeStamp);
-			printf(LoggerLevelStrings[lvl]);
-			printf(FunctionNameStrings[fn]);
-			printf("%s\n\r", message);
+			uartPrintf(timeStamp);
+			uartPrintf(LoggerLevelStrings[lvl]);
+			uartPrintf(FunctionNameStrings[fn]);
+			uartPrintf(" \0");
+			uartPrintf(message);
 		}
 		break;
 
 	case LOGGER_LEVEL_TEST:
-		printf(timeStamp);
-		printf(LoggerLevelStrings[lvl]);
-		printf(FunctionNameStrings[fn]);
-		printf("%s\n\r", message);
+		uartPrintf(timeStamp);
+		uartPrintf(LoggerLevelStrings[lvl]);
+		uartPrintf(FunctionNameStrings[fn]);
+		uartPrintf(" \0");
+		uartPrintf(message);
 		break;
 
 	default:
-		printf(timeStamp);
-		printf("LOG_LEVEL is undefined \n\r");
+		uartPrintf(timeStamp);
+		uartPrintf("LOG_LEVEL is undefined \n\r\0");
 		break;
 	}
 }

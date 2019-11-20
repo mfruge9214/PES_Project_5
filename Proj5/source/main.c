@@ -45,6 +45,7 @@
 #include "main.h"
 #include "logger.h"
 #include "Systick.h"
+#include "gpio.h"
 
 /* UCUNIT test files */
 #include "Testsuite.h"
@@ -65,9 +66,13 @@ int main(void) {
 
     /* Initialize development modules */
     SystickInit();
-    logInit(loglevel);
-    logEnable();
     uartInit(INT_ENABLE);
+    logInit(loglevel);
+    gpioInit();
+    logEnable();
+
+
+    gpioBlueLEDOn();
 
 #if   (PROGRAM_MODE == TEST_MODE)
 	Testsuite_RunTests();				//run testsuite and exit
@@ -87,11 +92,20 @@ int main(void) {
 	{
 		err = uartRun();
 //		if((err != echo_success) || (err != app_success))
+#if		(PROGRAM_MODE == ECHO_MODE)
 		if(err != echo_success)
 		{
-			//log error
+			logString(LL_Debug, FN_main, "Echo Failed\0");
 			return -1;
 		}
+
+#elif	(PROGRAM_MODE == APP_MODE)
+		if(err != app_success)
+		{
+			logString(LL_Debug, FN_main, "Application Failed\0");
+			return -1;
+		}
+#endif
 	}
     return 0;
 }
