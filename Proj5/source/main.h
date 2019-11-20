@@ -30,16 +30,16 @@
 #define PROGRAM_MODE			ECHO_MODE
 
 
+typedef uart_ret_t (* uart_fncPtr_t)(void);
 
-
-#if UART_MODE
+#if (UART_MODE == BLOCKING_MODE)
 #define INT_ENABLE				0
-uart_ret_t (* uartEcho)(void)					= uartBlockEcho;
-uart_ret_t (* uartApp)(CircularBuffer_t * buf)	= uartBlockApp;
+uart_fncPtr_t uartEcho							= uartBlockEcho;
+uart_fncPtr_t uartApp							= uartBlockApp;
 #else
 #define INT_ENABLE				1
-uart_ret_t (* uartEcho)(void)					= uartNonBlockEcho;
-uart_ret_t (* uartApp)(CircularBuffer_t * buf)	= uartNonBlockApp;
+uart_fncPtr_t uartEcho							= uartNonBlockEcho;
+uart_fncPtr_t uartApp							= uartNonBlockApp;
 #endif /* UART_MODE */
 
 #if 	(PROGRAM_MODE == ECHO_MODE)

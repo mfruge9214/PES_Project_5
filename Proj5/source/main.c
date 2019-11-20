@@ -45,6 +45,7 @@
 #include "main.h"
 #include "logger.h"
 #include "Systick.h"
+#include "gpio.h"
 
 /* UCUNIT test files */
 #include "Testsuite.h"
@@ -67,52 +68,44 @@ int main(void) {
     SystickInit();
     uartInit(INT_ENABLE);
     logInit(loglevel);
+    gpioInit();
     logEnable();
 
-#if (PROGRAM_MODE == ECHO_MODE)
 
-	/* Run echo mode indefinitely - unless error detected */
+    gpioBlueLEDOn();
+
+#if   (PROGRAM_MODE == TEST_MODE)
+	Testsuite_RunTests();				//run testsuite and exit
+	return 0;
+#else
+#if   (PROGRAM_MODE == ECHO_MODE)
+    uart_fncPtr_t uartRun = uartEcho;	//set uartRun to uartEcho(block or nonblock)
+#elif (PROGRAM_MODE == APP_MODE)
+    uart_fncPtr_t uartRun = uartApp;	//set uartRun to uartApp(block or nonblock)
+
+#endif /* PROGRAM_MODE == ECHO_MODE or APP_MODE */
+#endif /* PROGRAM_MODE == TEST_MODE */
+
+	/* Run uartFunction indefinitely - unless error detected */
     uart_ret_t err;
 	while(1)
 	{
-		err = uartEcho();
+		err = uartRun();
+//		if((err != echo_success) || (err != app_success))
+#if		(PROGRAM_MODE == ECHO_MODE)
 		if(err != echo_success)
 		{
-			//log error
+			logString(LL_Debug, FN_main, "Echo Failed\0");
 			return -1;
 		}
-	}
 
-#elif (PROGRAM_MODE == APP_MODE)
-
-	/* Initialize a circular buffer to store received characters */
-	CircularBuffer_t * circ_buf = CircBufCreate();
-	CircBufferReturn_t ret = CircBufInit(circ_buf, BUFSIZE);
-	if(ret != BUF_SUCCESS)
-	{
-		//log error
-		return -1;
-	}
-
-	/* Run app mode indefinitely - unless error detected */
-    uart_ret_t err;
-	while(1)
-	{
-		err = uartApp(circ_buf);
+#elif	(PROGRAM_MODE == APP_MODE)
 		if(err != app_success)
 		{
-			//log error
+			logString(LL_Debug, FN_main, "Application Failed\0");
 			return -1;
 		}
+#endif
 	}
-
-#elif	(PROGRAM_MODE == TEST_MODE)
-
-	/* Run tests and exit */
-	Testsuite_RunTests();
-	return 0;
-
-#endif	/* PROGRAM_MODE */
-
-    return 0 ;
+    return 0;
 }

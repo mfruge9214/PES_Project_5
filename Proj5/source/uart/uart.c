@@ -5,9 +5,13 @@
  */
 #include "uart.h"
 #include "MKL25Z4.h"
+#include "circular_buffer.h"
+#include "gpio.h"
 
-// global var for interrupt handling
-static volatile uart_nb_state_t uartST;
+
+// receive and transmit buffers
+static CircularBuffer_t * rxBuf;
+static CircularBuffer_t * txBuf;
 
 // Static Array for storing characters read
 static uint8_t CharCountArray[ASCII_CHAR_CNT] = {0};
@@ -19,19 +23,29 @@ static uint8_t CharCountArray[ASCII_CHAR_CNT] = {0};
  */
 void uartInit(bool int_en)
 {
+	/* init tx and rx buffers */
+	rxBuf = CircBufCreate();
+	CircBufferReturn_t ret 	= CircBufInit(rxBuf, BUFSIZE);
+	if(ret != BUF_SUCCESS)
+		return; //TODO log error
+
+	txBuf = CircBufCreate();
+	ret 	= CircBufInit(txBuf, BUFSIZE);
+	if(ret != BUF_SUCCESS)
+		return; //TODO log error
+
 	/* init clocks */
 	SIM->SCGC4 |= SIM_SCGC4_UART0_MASK;
 	SIM->SCGC5 |= SIM_SCGC5_PORTA_MASK;
-	SIM->SOPT2 |= SIM_SOPT2_UARTSRC_MASK;
-	SIM->SOPT2 |= SIM_SOPT2_PLLFLLSEL_MASK;
+
+	SIM->SOPT5 &= ~(SIM_SOPT5_UART0RXSRC_MASK | SIM_SOPT5_UART0TXSRC_MASK);
+//	SIM->SOPT2 |= SIM_SOPT2_UART0SRC_MASK;
+//	SIM->SOPT2 |= SIM_SOPT2_PLLFLLSEL_MASK;
+
 
 	/* disable tx & rx */
 	UART0->C2 &= ~UART_C2_RE_MASK; //disable receive
 	UART0->C2 &= ~UART_C2_TE_MASK; //disable transmit
-
-	/* init ports and pins */
-	//rx = A1 handled at init
-	//tx = A2
 
 	/* set data frame */
 //	UART0->C1 |= UART_C1_PT_MASK; 		//odd parity
@@ -44,7 +58,9 @@ void uartInit(bool int_en)
 	UART0->BDH &= ~UART0_BDH_SBR_MASK;
 	UART0->BDH |= UART0_BDH_SBR(sbr>>8);
 	UART0->BDL = UART0_BDL_SBR(sbr);
-	UART0->C4 |= UART0_C4_OSR(UART_OVERSAMPLE_RATE - 1);
+
+	UART0->C4 |= UART0_C4_OSR(UART_OVERSAMPLE_RATE-1);
+
 
 	/* select whether or not to enable interrupts */
 	uartEnableInterrupts(int_en);
@@ -63,18 +79,12 @@ void uartEnableInterrupts(bool enable)
 {
 	if(enable)
 	{
-		uartST.uartST_txReady 	= false;
-		uartST.uartST_txEnabled = false;
-		uartST.uartST_rxReady 	= false;
-		uartST.uartST_rxEnabled = false;
-		uartST.txByte			= 0;
-		uartST.rxByte			= 0;
-
-		UART0->C2 |= UART_C2_TIE_MASK; 		//interrupt when data can be transmitted
+		/* Dont Enable Transmit Interrupts Yet */
+//		UART0->C2 |= UART_C2_TIE_MASK; 		//interrupt when data can be transmitted
 		UART0->C2 |= UART_C2_RIE_MASK; 		//interrupt when data has been received
+		UART0->C3 = uartNonBlockErrorFlags;
 
-		//TODO add interrupts for errors
-
+		NVIC_ClearPendingIRQ(UART0_IRQn);
 		NVIC_EnableIRQ(UART0_IRQn);
 	}
 }
@@ -101,24 +111,6 @@ uart_ret_t uartReadByte(uint8_t * b)
 	return rx_success;
 }
 
-uart_ret_t uartSendReport()
-{
-	int i;
-	for(i=0; i<ASCII_CHAR_CNT; i++)
-	{
-		// Skip characters that have not been received
-		if(CharCountArray[i] != 0)
-		{
-			uartBlockSendCharacter(ASCII_BASE + i);
-			uartBlockSendCharacter('-');
-			uartBlockSendCharacter(CharCountArray[i]);
-			uartBlockSendCharacter(';');
-		}
-
-	}
-
-	return report_success;
-}
 
 /* * * * * BLOCKING UART FUNCTIONS * * * * */
 
@@ -155,8 +147,9 @@ uart_ret_t uartBlockReceiveReady()
  */
 uart_ret_t uartBlockSendCharacter(char c)
 {
+//	gpioGreenLEDOn();
 	while(uartBlockTransmitReady() != tx_ready); //wait
-	return uartSendByte((uint8_t) c);		//send byte
+	return uartSendByte((uint8_t) c);			 //send byte
 }
 
 /*
@@ -166,8 +159,9 @@ uart_ret_t uartBlockSendCharacter(char c)
  */
 uart_ret_t uartBlockReadCharacter(char * c)
 {
+//	gpioBlueLEDOn();
 	while(uartBlockReceiveReady() != rx_ready); //wait
-	return uartReadByte((uint8_t *) c);		//read byte
+	return uartReadByte((uint8_t *) c);			//read byte
 }
 
 /*
@@ -180,23 +174,20 @@ uart_ret_t uartBlockEcho()
 	char echo_byte;
 	uart_ret_t ret;
 
-	//XXX test for development purposes
-	for(uint8_t i = 0; i < 5; i++)
-	{
-		echo_byte = 'X';
-		ret = uartBlockSendCharacter(echo_byte);
-		if(ret != tx_success)
-			return echo_fail;
-
-	}
-
 	ret = uartBlockReadCharacter(&echo_byte);
 	if(ret != rx_success)
+	{
+		gpioRedLEDOn();
 		return echo_fail;
+	}
+
 
 	ret = uartBlockSendCharacter(echo_byte);
 	if(ret != tx_success)
+	{
+		gpioRedLEDOn();
 		return echo_fail;
+	}
 
 	return echo_success;
 }
@@ -206,31 +197,97 @@ uart_ret_t uartBlockEcho()
  * param: N/A
  * ret: success or fail
  */
-uart_ret_t uartBlockApp(CircularBuffer_t * buf)
+uart_ret_t uartBlockApp()
 {
-	char new_byte;
+	char data;
 	uart_ret_t ret;
 
 	/* Read new character */
-	ret = uartBlockReadCharacter(&new_byte);
+	ret = uartBlockReadCharacter(&data);
 	if(ret != rx_success)
+	{
+		gpioRedLEDOn();
 		return ret;
+	}
 
-	/* TODO Add character to buffer */
+	CircBufAdd(rxBuf, data);
 
 	/* Check character value */
-	if(new_byte == TRANSMIT_CONDITION)
+	if(data == TRANSMIT_CONDITION)
 	{
-		ret = uartSendReport();
+		ret = uartBlockSendReport();
 		if(ret != report_success)
+		{
+			gpioRedLEDOn();
 			return ret;
+		}
+
 	}
 
 	return app_success;
 }
 
+uart_ret_t uartBlockSendReport()
+{
+	uint8_t b;
+	while(CircBufIsEmpty(rxBuf) != BUF_EMPTY)
+	{
+		CircBufRemove(rxBuf, &b);
+		if((b >= ASCII_BASE) && (b <= ASCII_END))
+		{
+			CharCountArray[b - ASCII_BASE]++;
+		}
+	}
+
+	for(uint8_t i = 0; i < ASCII_CHAR_CNT; i++)
+	{
+		// Skip characters that have not been received
+		if(CharCountArray[i] != 0)
+		{
+			uartBlockSendCharacter(ASCII_BASE + i);
+			uartBlockSendCharacter('-');
+			if(CharCountArray[i] >= 10)
+			{
+				uartBlockSendCharacter(DEC_TO_ASCII(CharCountArray[i] / 10));
+				uartBlockSendCharacter(DEC_TO_ASCII(CharCountArray[i] % 10));
+			}
+			else
+			{
+				uartBlockSendCharacter(DEC_TO_ASCII(CharCountArray[i]));
+			}
+			uartBlockSendCharacter(';');
+			uartBlockSendCharacter(' ');
+		}
+
+	}
+	uartBlockSendCharacter('\n');
+	uartBlockSendCharacter('\r');
+	return report_success;
+}
+
 /* * * * * NON-BLOCKING UART FUNCTIONS * * * * */
 
+uart_ret_t uartNonBlockSendCharacter(char c)
+{
+	CircBufferReturn_t ret = CircBufAdd(txBuf, c);
+	if(ret == BUF_FULL)
+	{
+		gpioRedLEDOn();
+		return tx_fail;
+	}
+
+	else
+		return tx_success;
+}
+
+uart_ret_t uartNonBlockReadCharacter(char * c)
+{
+	CircBufferReturn_t ret = CircBufRemove(rxBuf, c);
+	if(ret == BUF_EMPTY)
+		return rx_fail;
+	else
+		return rx_success;
+}
 
 /*
  * brief: uartNonBlockEcho - Retransmits any characters that have been received
@@ -239,87 +296,98 @@ uart_ret_t uartBlockApp(CircularBuffer_t * buf)
  */
 uart_ret_t uartNonBlockEcho(void)
 {
-	static char echo_byte;
-	uart_ret_t ret;
+	char data;
 
-	//XXX test for development purposes
-	for(uint8_t i = 0; i < 5; i++)
+	if(CircBufIsEmpty(rxBuf) != BUF_EMPTY)
 	{
-		uartST.txByte = ('A' + i);
-		uartNonBlockTransmitEnable;
+		CircBufRemove(rxBuf, &data);	//transfer data from rxBuf
+		CircBufAdd(txBuf, data);		//to txBuf
+		uartNonBlockTransmitEnable;		//and then enable transmission
 	}
-	uartNonBlockTransmitDisable;
-
-	if(uartST.uartST_rxReady && uartST.uartST_rxEnabled) 	//read character
+	if(CircBufIsEmpty(txBuf) == BUF_EMPTY)
 	{
-		ret = uartReadByte((uint8_t *)&echo_byte);
-		if(ret != rx_success)
-			return ret;
-
-		//update UART state
-		uartST.uartST_rxReady	= false;
-		uartST.uartST_rxEnabled	= false;
-	}
-
-	if(uartST.uartST_txReady)								//send character
-	{
-		ret = uartSendByte(echo_byte);
-		if(ret != tx_success)
-			return ret;
-
-		//update UART state
-		uartST.uartST_txReady	= false;
-		uartST.uartST_rxEnabled	= true;
+		uartNonBlockTransmitDisable;	//stop transmitting if no more tx data available
 	}
 
 	return echo_success;
 }
 
 /*
- * brief: uartNonBlockApp - Adds received bytes to data structure and transmits report back in case of special char
+ * brief: uartNonBlockApp - Transmits report over uart in case of special char
  * param: N/A
  * ret: success or fail
  */
-uart_ret_t uartNonBlockApp(CircularBuffer_t * buf)
+uart_ret_t uartNonBlockApp()
 {
-	static char new_byte;
-	uart_ret_t ret;
+	static uart_ret_t ret;
 
-	if(uartST.uartST_rxReady)								//read character
+	if(*rxBuf->head == TRANSMIT_CONDITION)
 	{
-		ret = uartReadByte((uint8_t *)&new_byte);
-		if(ret != rx_success)
+		ret = uartNonBlockSendReport();
+		if(ret != report_success)
+		{
+			gpioRedLEDOn();
 			return ret;
-
-		/* TODO add to buffer */
-		if(new_byte >= ASCII_BASE && new_byte <= ASCII_END)
-		{
-			CharCountArray[new_byte - ASCII_BASE]++;
-		}
-
-
-		if(new_byte == TRANSMIT_CONDITION)
-		{
-			ret = uartSendReport();
-			if(ret != report_success)
-				return ret;
 		}
 
 	}
-
 	return app_success;
 }
 
-uart_ret_t uartPrintf(char * string)
+uart_ret_t uartNonBlockSendReport()
 {
-	int i;
+//	START_CRITICAL();
 
-	while(string[i] != '/0')
+	char b;
+	while(CircBufIsEmpty(rxBuf) != BUF_EMPTY)
 	{
-		uartBlockSendCharacter(string[i]);
+		CircBufRemove(rxBuf, &b);
+		CharCountArray[b - ASCII_BASE]++;
 	}
+
+	uartNonBlockTransmitEnable;
+
+	for(uint8_t i = 0; i < ASCII_CHAR_CNT; i++)
+	{
+		// Skip characters that have not been received
+		if(CharCountArray[i] != 0)
+		{
+			//TODO change this to CircBufAdd(TxBuf, xxx)
+			uartNonBlockSendCharacter(ASCII_BASE + i);
+			uartNonBlockSendCharacter('-');
+			if(CharCountArray[i] >= 10)
+			{
+				uartNonBlockSendCharacter(DEC_TO_ASCII(CharCountArray[i] / 10));
+				uartNonBlockSendCharacter(DEC_TO_ASCII(CharCountArray[i] % 10));
+			}
+			else
+			{
+				uartNonBlockSendCharacter(DEC_TO_ASCII(CharCountArray[i]));
+			}
+			uartNonBlockSendCharacter(';');
+			uartNonBlockSendCharacter(' ');
+		}
+
+	}
+	uartNonBlockSendCharacter('\n');
+	uartNonBlockSendCharacter('\r');
+
+	uartNonBlockTransmitDisable;
+//	END_CRITICAL();
+	return report_success;
 }
 
+
+uart_ret_t uartPrintf(char * string)
+{
+	int i = 0;
+
+	while(string[i] != 0)
+	{
+		uartBlockSendCharacter(string[i]);
+		i++;
+	}
+}
 
 /*
  * brief: UART0_IRQHandler - Sets flags that are read by NonBlock functions for processing
@@ -328,14 +396,27 @@ uart_ret_t uartPrintf(char * string)
  */
 void UART0_IRQHandler()
 {
+	__disable_irq();
+
+	char data;
+
 	if(UART0->S1 & UART_S1_RDRF_MASK)
 	{
-		uartST.uartST_rxReady = true;
-		uartST.rxByte = UART0->D;
+		data = UART0->D;
+		CircBufAdd(rxBuf, data);
 	}
 	if((UART0->S1 & UART_S1_TDRE_MASK) && (UART0->C2 & UART_C2_TIE_MASK))
 	{
-		UART0->D = uartST.txByte;
-		uartNonBlockTransmitDisable;
+		CircBufRemove(txBuf, &data);
+		uartSendByte(data);
 	}
+	if(UART0->S1 & uartNonBlockErrorFlags)
+	{
+		UART0->S1 &= ~uartNonBlockErrorFlags;
+		gpioRedLEDOn();
+
+		//Log error
+	}
+
+	__enable_irq();
 }
