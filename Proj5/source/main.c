@@ -87,11 +87,20 @@ int main(void) {
 	{
 		err = uartRun();
 //		if((err != echo_success) || (err != app_success))
-		if(err != app_success)
+#if		(PROGRAM_MODE == ECHO_MODE)
+		if(err != echo_success)
 		{
-			//log error
+			logString(LL_Debug, FN_main, "Echo Failed");
 			return -1;
 		}
+
+#elif	(PROGRAM_MODE == APP_MODE)
+		if(err != app_success)
+		{
+			logString(LL_Debug, FN_main, "Application Failed");
+			return -1;
+		}
+#endif
 	}
     return 0;
 }
