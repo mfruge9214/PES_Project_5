@@ -32,16 +32,16 @@ void uartInit(bool int_en)
 	if(ret != BUF_SUCCESS)
 		return; //TODO log error
 
+	/* init clocks */
+	SIM->SCGC4 |= SIM_SCGC4_UART0_MASK;
+	SIM->SCGC5 |= SIM_SCGC5_PORTA_MASK;
+	SIM->SOPT5 &= ~(SIM_SOPT5_UART0RXSRC_MASK | SIM_SOPT5_UART0TXSRC_MASK);
+//	SIM->SOPT2 |= SIM_SOPT2_UART0SRC_MASK;
+//	SIM->SOPT2 |= SIM_SOPT2_PLLFLLSEL_MASK;
 
 	/* disable tx & rx */
 	UART0->C2 &= ~UART_C2_RE_MASK; //disable receive
 	UART0->C2 &= ~UART_C2_TE_MASK; //disable transmit
-
-	/* init clocks */
-	SIM->SCGC4 |= SIM_SCGC4_UART0_MASK;
-	SIM->SCGC5 |= SIM_SCGC5_PORTA_MASK;
-	SIM->SOPT2 |= SIM_SOPT2_UART0SRC_MASK;
-	SIM->SOPT2 |= SIM_SOPT2_PLLFLLSEL_MASK;
 
 	/* set data frame */
 //	UART0->C1 |= UART_C1_PT_MASK; 		//odd parity
@@ -166,16 +166,6 @@ uart_ret_t uartBlockEcho()
 	char echo_byte;
 	uart_ret_t ret;
 
-	//XXX test for development purposes
-	for(uint8_t i = 0; i < 5; i++)
-	{
-		echo_byte = 'X';
-		ret = uartBlockSendCharacter(echo_byte);
-		if(ret != tx_success)
-			return echo_fail;
-
-	}
-
 	ret = uartBlockReadCharacter(&echo_byte);
 	if(ret != rx_success)
 		return echo_fail;
@@ -242,7 +232,6 @@ uart_ret_t uartBlockSendReport()
 
 /* * * * * NON-BLOCKING UART FUNCTIONS * * * * */
 
-
 /*
  * brief: uartNonBlockEcho - Retransmits any characters that have been received
  * param: N/A
@@ -251,6 +240,12 @@ uart_ret_t uartBlockSendReport()
 uart_ret_t uartNonBlockEcho(void)
 {
 	char data;
+
+	for(uint8_t i = 0; i < 10; i++)
+	{
+		data = 'A' + i;
+		CircBufAdd(rxBuf, data);
+	}
 
 	if(CircBufIsEmpty(rxBuf) != BUF_EMPTY)
 	{
