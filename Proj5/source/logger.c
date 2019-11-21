@@ -13,7 +13,7 @@ static bool LOG_ENABLE;
 static LoggerLevel LOG_LEVEL;
 
 static const char * LoggerLevelStrings[NUM_LEVELS] = {
-		"	Test: 	 \0",
+		"	Test: 	\0",
 		"	Debug:  \0",
 		"	Status: \0"
 };
@@ -23,7 +23,7 @@ static const char * FunctionNameStrings[NUM_FUNCTIONS] = {
 		"RedLEDOn: 			\0",
 		"BlueLEDOn: 		\0",
 		"GreenLEDOn: 		\0",
-		"StateMachineA: 	\0",
+		"uartBlockApp: 		\0",
 		"StateMachineB: 	\0",
 		"TempReading: 		\0",
 		"AverageWait: 		\0",
@@ -98,7 +98,7 @@ void logString(LoggerLevel lvl, FunctionName fn, char* message)
 			uartPrintf(FunctionNameStrings[fn]);
 			uartPrintf(" \0");
 			uartPrintf(message);
-//			uartPrintf("%s\n\r", message);
+			uartPrintf("\n\r\0");
 		}
 		break;
 
@@ -110,6 +110,7 @@ void logString(LoggerLevel lvl, FunctionName fn, char* message)
 			uartPrintf(FunctionNameStrings[fn]);
 			uartPrintf(" \0");
 			uartPrintf(message);
+			uartPrintf("\n\r\0");
 		}
 		break;
 
@@ -119,6 +120,7 @@ void logString(LoggerLevel lvl, FunctionName fn, char* message)
 		uartPrintf(FunctionNameStrings[fn]);
 		uartPrintf(" \0");
 		uartPrintf(message);
+		uartPrintf("\n\r\0");
 		break;
 
 	default:

@@ -28,7 +28,7 @@ void gpioInit()
 
 void gpioRedLEDOn()
 {
-	logString(LL_Debug, FN_redLEDOn, "Red LED On");
+	logString(LL_Debug, FN_redLEDOn, "Red LED On \0");
 	LED_RED_ON();
 	LED_GREEN_OFF();
 	LED_BLUE_OFF();
@@ -36,7 +36,7 @@ void gpioRedLEDOn()
 
 void gpioBlueLEDOn()
 {
-	logString(LL_Debug, FN_blueLEDOn, "Blue LED On");
+	logString(LL_Debug, FN_blueLEDOn, "Blue LED On \0");
 	LED_RED_OFF();
 	LED_GREEN_OFF();
 	LED_BLUE_ON();
@@ -44,7 +44,7 @@ void gpioBlueLEDOn()
 
 void gpioGreenLEDOn()
 {
-	logString(LL_Debug, FN_greenLEDOn, "Green LED On");
+	logString(LL_Debug, FN_greenLEDOn, "Green LED On \0");
 	LED_RED_OFF();
 	LED_GREEN_ON();
 	LED_BLUE_OFF();

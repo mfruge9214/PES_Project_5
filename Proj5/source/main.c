@@ -71,7 +71,6 @@ int main(void) {
     gpioInit();
     logEnable();
 
-
     gpioBlueLEDOn();
 
 #if   (PROGRAM_MODE == TEST_MODE)
@@ -80,32 +79,26 @@ int main(void) {
 #else
 #if   (PROGRAM_MODE == ECHO_MODE)
     uart_fncPtr_t uartRun = uartEcho;	//set uartRun to uartEcho(block or nonblock)
+    uart_ret_t success = echo_success;
 #elif (PROGRAM_MODE == APP_MODE)
     uart_fncPtr_t uartRun = uartApp;	//set uartRun to uartApp(block or nonblock)
-
+    uart_ret_t success = app_success;
 #endif /* PROGRAM_MODE == ECHO_MODE or APP_MODE */
 #endif /* PROGRAM_MODE == TEST_MODE */
 
 	/* Run uartFunction indefinitely - unless error detected */
+    gpioGreenLEDOn();
+
     uart_ret_t err;
 	while(1)
 	{
 		err = uartRun();
-//		if((err != echo_success) || (err != app_success))
-#if		(PROGRAM_MODE == ECHO_MODE)
-		if(err != echo_success)
+		if(err != success)
 		{
-			logString(LL_Debug, FN_main, "Echo Failed\0");
+			logString(LL_Debug, FN_main, "Program Failed\0");
+		    gpioRedLEDOn();
 			return -1;
 		}
-
-#elif	(PROGRAM_MODE == APP_MODE)
-		if(err != app_success)
-		{
-			logString(LL_Debug, FN_main, "Application Failed\0");
-			return -1;
-		}
-#endif
 	}
     return 0;
 }
