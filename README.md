@@ -32,3 +32,5 @@ Lastly, we had problems trying to acquire the uart communication on the oscillos
 Execution Instructions:
       Before running this application, ensure to select what combination of modes the application should run in by changing the #define PROGRAM_MODE and #define BLOCKING_MODE to see the desired output
       
+      
+Eratta: Since we were not quite ready during the demo, we have added components to a new tag that is True_Final. This tag contains our logic analyzer capture, which was late due to us having problems probing the UART0 pin and having a learning curve with the logic analyzer, as well as an updated Realloc function
