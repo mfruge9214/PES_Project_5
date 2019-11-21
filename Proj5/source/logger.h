@@ -55,7 +55,8 @@ typedef enum
 	FN_CircBufInit			,
 	FN_CircBufRealloc		,
 	FN_CircBufAdd			,
-	FN_CircBufRemove
+	FN_CircBufRemove		,
+	FN_uartInit
 } FunctionName;
 
 /***********************************************

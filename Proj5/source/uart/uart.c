@@ -7,6 +7,7 @@
 #include "MKL25Z4.h"
 #include "circular_buffer.h"
 #include "gpio.h"
+#include "logger.h"
 
 
 // receive and transmit buffers
@@ -27,16 +28,28 @@ void uartInit(bool int_en)
 	rxBuf = CircBufCreate();
 	CircBufferReturn_t ret 	= CircBufInit(rxBuf, BUFSIZE);
 	if(ret != BUF_SUCCESS)
-		return; //TODO log error
+	{
+		gpioRedLEDOn();
+		logString(LL_Debug, FN_uartInit, "Creation of rx Buffer Failed\n\r\0");
+		return;
+	}
 
 	txBuf = CircBufCreate();
 	ret 	= CircBufInit(txBuf, BUFSIZE);
 	if(ret != BUF_SUCCESS)
-		return; //TODO log error
+	{
+		gpioRedLEDOn();
+		logString(LL_Debug, FN_uartInit, "Creation of tx Buffer Failed\n\r\0");
+		return;
+	}
+
 
 	/* init clocks */
 	SIM->SCGC4 |= SIM_SCGC4_UART0_MASK;
 	SIM->SCGC5 |= SIM_SCGC5_PORTA_MASK;
+
+	//TODO Remove after screen grab
+	SIM->SCGC5 |= SIM_SCGC5_PORTE_MASK;
 
 	SIM->SOPT5 &= ~(SIM_SOPT5_UART0RXSRC_MASK | SIM_SOPT5_UART0TXSRC_MASK);
 //	SIM->SOPT2 |= SIM_SOPT2_UART0SRC_MASK;
@@ -378,7 +391,7 @@ uart_ret_t uartNonBlockSendReport()
 }
 
 
-uart_ret_t uartPrintf(char * string)
+void uartPrintf(char * string)
 {
 	int i = 0;
 
