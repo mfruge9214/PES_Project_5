@@ -77,20 +77,22 @@ CircBufferReturn_t CircBufRealloc(CircularBuffer_t * buf)
 	/* Check the buffer is actually full */
 	if(buf->capacity != buf->length)
 	{
-		logString(LL_Debug, FN_CircBufRealloc, "Buffer not full, so not reallocating");
+		logString(LL_Debug, FN_CircBufRealloc, "Buffer not full, so not reallocating\0");
 		return BUF_FAIL;
 	}
 
 	/* Reallocate the memory */
+
+	logString(LL_Debug, FN_CircBufRealloc, "Reallocating Buffer\0");
 
 	char* temp;
 	temp = (char*) realloc(buf->buffer_start, buf->capacity * BUFSIZE_MULT);
 	buf->buffer_start = temp;
 
 	/* Ensure reallocation worked */
-	if(CircBufIsValid(buf))
+	if(CircBufIsValid(buf) != BUF_SUCCESS)
 	{
-		logString(LL_Debug, FN_CircBufRealloc, "Re-allocation Failed");
+		logString(LL_Debug, FN_CircBufRealloc, "Re-allocation Failed\0");
 		return BUF_FAIL;
 	}
 
@@ -166,7 +168,7 @@ CircBufferReturn_t	CircBufAdd(CircularBuffer_t * buf, char c)
 	/* Check that the buffer is not full */
 	if(CircBufIsFull(buf) == BUF_FULL)
 	{
-		logString(LL_Debug, FN_CircBufAdd, "Buffer full");
+		logString(LL_Debug, FN_CircBufAdd, "Buffer full\0");
 
 		ret = BUF_FULL;
 
@@ -217,7 +219,7 @@ CircBufferReturn_t	CircBufRemove(CircularBuffer_t * buf, char * charOut)
 {
 	if(CircBufIsEmpty(buf) == BUF_EMPTY)
 	{
-		logString(LL_Debug, FN_CircBufRemove, "Buffer Empty");
+		logString(LL_Debug, FN_CircBufRemove, "Buffer Empty\0");
 		return BUF_EMPTY;
 	}
 

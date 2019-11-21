@@ -9,12 +9,16 @@
 
 /* Definitions */
 
-#ifndef REALLOCATE_BUFFER
-#define REALLOCATE_BUFFER	0
-#endif
-
 #define BUFSIZE				16
 #define BUFSIZE_MULT		2
+
+/*~~~~~~~~~~ REALLOCATION SELECTION ~~~~~~~~~~~~~~*/
+#define ERROR_MODE				0
+#define	REALLOC_MODE			1
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+#define	REALLOCATE_BUFFER		REALLOC_MODE
+
 
 /* Structures */
 

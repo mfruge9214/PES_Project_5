@@ -40,10 +40,6 @@
 #include "circular_buffer.h"
 
 
-
-#if		(PROGRAM_MODE == TEST_MODE)
-#define REALLOCATE_BUFFER	1
-#endif
 /* 	T E S T 	C A S E S	*/
 
 void Test_CircularBufferCreate(void)
