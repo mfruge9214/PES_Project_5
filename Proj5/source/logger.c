@@ -39,7 +39,8 @@ static const char * FunctionNameStrings[NUM_FUNCTIONS] = {
 		"CircBufInit		\0",
 		"CircBufRealloc		\0",
 		"CircBufAdd			\0",
-		"CircBufRemove		\0"
+		"CircBufRemove		\0",
+		"UartInit			\0"
 };
 
 void logInit(LoggerLevel lvl)

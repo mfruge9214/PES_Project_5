@@ -27,7 +27,9 @@
 /* Set to 0 or ECHO_MODE to run in Echo mode
  * Set to 1 or APP_MODE  to run in Application mode
  * Set to 2 or TEST_MODE to run in Test mode */
-#define PROGRAM_MODE			ECHO_MODE
+#define PROGRAM_MODE			APP_MODE
+
+
 
 
 typedef uart_ret_t (* uart_fncPtr_t)(void);

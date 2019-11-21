@@ -8,6 +8,7 @@ C_SRCS += \
 ../source/Systick.c \
 ../source/Testsuite.c \
 ../source/circular_buffer.c \
+../source/gpio.c \
 ../source/logger.c \
 ../source/main.c \
 ../source/mtb.c \
@@ -18,6 +19,7 @@ OBJS += \
 ./source/Systick.o \
 ./source/Testsuite.o \
 ./source/circular_buffer.o \
+./source/gpio.o \
 ./source/logger.o \
 ./source/main.o \
 ./source/mtb.o \
@@ -28,6 +30,7 @@ C_DEPS += \
 ./source/Systick.d \
 ./source/Testsuite.d \
 ./source/circular_buffer.d \
+./source/gpio.d \
 ./source/logger.d \
 ./source/main.d \
 ./source/mtb.d \
