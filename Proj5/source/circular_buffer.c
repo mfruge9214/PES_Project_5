@@ -85,62 +85,49 @@ CircBufferReturn_t CircBufRealloc(CircularBuffer_t * buf)
 
 	logString(LL_Debug, FN_CircBufRealloc, "Reallocating Buffer\0");
 
-	char* temp;
-	temp = (char*) realloc(buf->buffer_start, buf->capacity * BUFSIZE_MULT);
-	buf->buffer_start = temp;
+	CircularBuffer_t * temp = CircBufCreate();
+	temp->buffer_start = (char*) realloc(buf->buffer_start, buf->capacity * BUFSIZE_MULT);
 
-	/* Ensure reallocation worked */
-	if(CircBufIsValid(buf) != BUF_SUCCESS)
-	{
-		logString(LL_Debug, FN_CircBufRealloc, "Re-allocation Failed\0");
-		return BUF_FAIL;
-	}
+	temp->capacity = buf->capacity * BUFSIZE_MULT;
+	temp->head = temp->buffer_start;
+	temp->tail = temp->buffer_start;
+	temp->length = 0;
+	temp->numReallocs = buf->numReallocs + 1;
+
 
 	START_CRITICAL();
 
 	/* Adjust values to reflect change */
 
 	/* Create holding values */
-	char* old_head;
-	char* old_tail;
 	char* old_bufend;
-	char* new_bufend;
 	char cTransfer;
 
-	old_head = buf->head;
-	old_tail = buf->tail;
 	old_bufend = (char*) buf->buffer_start + (sizeof(char) * buf->capacity);
 
 	/* Set new values */
-	buf->head = old_bufend;
-	buf->capacity *= BUFSIZE_MULT;
-	new_bufend = (char*) buf->buffer_start + (sizeof(char) * buf->capacity);
 
 	/* Loop to move characters while keeping them in order */
 
-	do{		// The do while loop handles the case of the buffer being full
-
+	do{
 		/* Remove the character from the buffer */
 		CircBufRemove(buf, &cTransfer);
 
-		/* Since we already changed the capacity of the buffer, need to check to see when tail wraps */
-		if(buf->tail == old_bufend)
-		{
-			buf->tail = buf->buffer_start;
-		}
+		CircBufAdd(temp, cTransfer);
 
-		CircBufAdd(buf, cTransfer);
+	} while(CircBufIsEmpty(buf) != BUF_EMPTY);
 
-	} while(buf->tail != old_head);
+	/* Set buf = temp */
+	free(buf->buffer_start);
 
-	/* Move tail to proper place */
-	buf->tail = old_bufend;
-	if(buf->head == new_bufend)
-	{
-		buf->head = buf->buffer_start;
-	}
-	buf->numReallocs ++;
+	buf->buffer_start = temp->buffer_start;
+	buf->head = temp->head;
+	buf->tail = temp->tail;
+	buf->numReallocs = temp->numReallocs;
+	buf->capacity = temp->capacity;
+	buf->length = temp->length;
 
+	free(temp);
 	/* Done manipulating interruptible data, so end critical section */
 	END_CRITICAL();
 
