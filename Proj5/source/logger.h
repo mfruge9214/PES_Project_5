@@ -39,7 +39,7 @@ typedef enum
 	FN_redLEDOn             ,
 	FN_blueLEDOn			,
 	FN_greenLEDOn			,
-	FN_stateMachineA		,
+	FN_uartBlockApp			,
 	FN_stateMachineB		,
 	FN_tempReading        	,
 	FN_avgWait				,

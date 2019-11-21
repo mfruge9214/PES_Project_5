@@ -234,7 +234,7 @@ uart_ret_t uartBlockApp()
 			gpioRedLEDOn();
 			return ret;
 		}
-
+		logString(LL_Debug, FN_uartBlockApp, "Character Count Sent \0");
 	}
 
 	return app_success;
@@ -333,8 +333,12 @@ uart_ret_t uartNonBlockEcho(void)
 uart_ret_t uartNonBlockApp()
 {
 	static uart_ret_t ret;
+	char data;
+	ret = uartNonBlockReadCharacter(&data);
+	if(ret != rx_success)
+		return app_success;
 
-	if(*rxBuf->head == TRANSMIT_CONDITION)
+	if(data == TRANSMIT_CONDITION)
 	{
 		ret = uartNonBlockSendReport();
 		if(ret != report_success)
@@ -343,6 +347,10 @@ uart_ret_t uartNonBlockApp()
 			return ret;
 		}
 
+	}
+	else
+	{
+		CircBufAdd(rxBuf, data);
 	}
 	return app_success;
 }
@@ -358,7 +366,7 @@ uart_ret_t uartNonBlockSendReport()
 		CharCountArray[b - ASCII_BASE]++;
 	}
 
-	uartNonBlockTransmitEnable;
+	uartNonBlockTransmitEnable;					//send
 
 	for(uint8_t i = 0; i < ASCII_CHAR_CNT; i++)
 	{
@@ -379,14 +387,15 @@ uart_ret_t uartNonBlockSendReport()
 			}
 			uartNonBlockSendCharacter(';');
 			uartNonBlockSendCharacter(' ');
-		}
 
+			while(CircBufIsEmpty(txBuf) != BUF_EMPTY);	//wait
+		}
 	}
 	uartNonBlockSendCharacter('\n');
 	uartNonBlockSendCharacter('\r');
 
 	uartNonBlockTransmitDisable;
-//	END_CRITICAL();
+
 	return report_success;
 }
 
@@ -400,6 +409,8 @@ void uartPrintf(char * string)
 		uartBlockSendCharacter(string[i]);
 		i++;
 	}
+//	uartBlockSendCharacter('\n');
+//	uartBlockSendCharacter('\r');
 }
 
 /*
@@ -409,7 +420,7 @@ void uartPrintf(char * string)
  */
 void UART0_IRQHandler()
 {
-	__disable_irq();
+	START_CRITICAL();
 
 	char data;
 
@@ -431,5 +442,5 @@ void UART0_IRQHandler()
 		//Log error
 	}
 
-	__enable_irq();
+	END_CRITICAL();
 }
